@@ -17,12 +17,25 @@ async function updateCurrentGroupName() {
   }
 }
 
+async function switchToGroup(groupName) {
+  const response = await browser.runtime.sendMessage({ action: "switchGroup", groupName });
+  if (response && response.success) {
+    await updateCurrentGroupName();
+  } else {
+    console.error("Failed to switch group:", response.error);
+  }
+}
+
 document.getElementById('addGroupButton').addEventListener('click', async function () {
   const groupName = prompt("Enter new group name:");
   if (groupName) {
-    await browser.runtime.sendMessage({ action: "createGroup", groupName });
-    addGroupElement(groupName);
-    await updateCurrentGroupName();
+    const response = await browser.runtime.sendMessage({ action: "createGroup", groupName });
+    if (response && response.success) {
+      addGroupElement(groupName);
+      await updateCurrentGroupName();
+    } else {
+      console.error("Failed to create group:", response.error);
+    }
   }
 });
 
@@ -73,8 +86,7 @@ function attachGroupClickListener(groupElement) {
       console.log("Already in group", groupName);
       return;
     }
-    await browser.runtime.sendMessage({ action: "switchGroup", groupName });
-    await updateCurrentGroupName();
+    await switchToGroup(groupName);
   });
 }
 
@@ -113,10 +125,14 @@ function attachContextMenuListeners(contextMenu, groupElement) {
   renameOption.addEventListener('click', async function () {
     const newName = prompt('Enter new group name:', groupName);
     if (newName && newName !== groupName) {
-      await browser.runtime.sendMessage({ action: "renameGroup", oldName: groupName, newName: newName });
-      groupElement.querySelector('.group-name').textContent = newName;
-      groupElement.dataset.name = newName;
-      await updateCurrentGroupName();
+      const response = await browser.runtime.sendMessage({ action: "renameGroup", oldName: groupName, newName: newName });
+      if (response && response.success) {
+        groupElement.querySelector('.group-name').textContent = newName;
+        groupElement.dataset.name = newName;
+        await updateCurrentGroupName();
+      } else {
+        console.error("Failed to rename group:", response.error);
+      }
     }
     closeContextMenu();
   });
@@ -125,10 +141,14 @@ function attachContextMenuListeners(contextMenu, groupElement) {
     if (groupElement.dataset.default === "true") {
       return;
     }
-    await browser.runtime.sendMessage({ action: "deleteGroup", groupName });
-    groupElement.parentNode.removeChild(groupElement);
+    const response = await browser.runtime.sendMessage({ action: "deleteGroup", groupName });
+    if (response && response.success) {
+      groupElement.parentNode.removeChild(groupElement);
+      await updateCurrentGroupName();
+    } else {
+      console.error("Failed to delete group:", response.error);
+    }
     closeContextMenu();
-    await updateCurrentGroupName();
   });
 }
 
@@ -148,15 +168,16 @@ document.addEventListener('click', function (event) {
 
 // Initialize the groups from storage
 async function initializeGroups() {
-  const tabGroups = await browser.runtime.sendMessage({ action: "getGroups" });
-  for (const groupName in tabGroups) {
-    addGroupElement(groupName);
+  const response = await browser.runtime.sendMessage({ action: "getGroups" });
+  if (response && response.success) {
+    const tabGroups = response.groups;
+    for (const groupName in tabGroups) {
+      addGroupElement(groupName);
+    }
+    await updateCurrentGroupName();
+  } else {
+    console.error("Failed to get groups:", response.error);
   }
-  await updateCurrentGroupName();
 }
-
-document.getElementById('saveLogsButton').addEventListener('click', async function () {
-    await browser.runtime.sendMessage({ action: "saveLogs" });
-  });  
 
 initializeGroups();

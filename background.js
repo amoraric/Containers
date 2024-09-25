@@ -107,22 +107,63 @@ async function saveLogsToFile() {
 }
 
 // Listen for messages from the sidebar
-browser.runtime.onMessage.addListener(async (message, sender) => {
-  if (message.action === "createGroup") {
-    await createNewGroup(message.groupName);
-  } else if (message.action === "switchGroup") {
-    await switchToGroup(message.groupName);
-  } else if (message.action === "deleteGroup") {
-    await deleteGroup(message.groupName);
-  } else if (message.action === "renameGroup") {
-    await renameGroup(message.oldName, message.newName);
-  } else if (message.action === "getGroups") {
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "createGroup") {
+      createNewGroup(message.groupName).then(() => {
+        sendResponse({ success: true });
+      }).catch((error) => {
+        console.error(error);
+        sendResponse({ success: false, error: error.message });
+      });
+      return true; // Keep the messaging channel open for sendResponse
+    } else if (message.action === "switchGroup") {
+      switchToGroup(message.groupName).then(() => {
+        sendResponse({ success: true });
+      }).catch((error) => {
+        console.error(error);
+        sendResponse({ success: false, error: error.message });
+      });
+      return true;
+    } else if (message.action === "deleteGroup") {
+      deleteGroup(message.groupName).then(() => {
+        sendResponse({ success: true });
+      }).catch((error) => {
+        console.error(error);
+        sendResponse({ success: false, error: error.message });
+      });
+      return true;
+    } else if (message.action === "renameGroup") {
+      renameGroup(message.oldName, message.newName).then(() => {
+        sendResponse({ success: true });
+      }).catch((error) => {
+        console.error(error);
+        sendResponse({ success: false, error: error.message });
+      });
+      return true;
+    } else if (message.action === "getGroups") {
+      getGroups().then((groups) => {
+        sendResponse({ success: true, groups });
+      }).catch((error) => {
+        console.error(error);
+        sendResponse({ success: false, error: error.message });
+      });
+      return true;
+    } else if (message.action === "saveLogs") {
+      saveLogsToFile().then(() => {
+        sendResponse({ success: true });
+      }).catch((error) => {
+        console.error(error);
+        sendResponse({ success: false, error: error.message });
+      });
+      return true;
+    }
+  });
+  
+  // Wrap getGroups in a function
+  async function getGroups() {
     const groups = await browser.storage.local.get("tabGroups");
     return groups.tabGroups || {};
-  } else if (message.action === "saveLogs") {
-    await saveLogsToFile();
-  }
-});
+}
 
 async function createNewGroup(groupName) {
   const { tabGroups } = await browser.storage.local.get("tabGroups");
