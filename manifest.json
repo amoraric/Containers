@@ -1,14 +1,14 @@
 {
     "manifest_version": 2,
     "name": "Simple Sidebar Extension",
-    "version": "1.1",
+    "version": "1.2",
     "description": "An extension that manages tab groups.",
     "permissions": [
       "tabs",
       "storage"
     ],
     "sidebar_action": {
-      "default_title": "Containers",
+      "default_title": "Simple Sidebar",
       "default_panel": "sidebar.html",
       "default_icon": {
         "16": "icons/icon16.png",

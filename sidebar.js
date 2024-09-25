@@ -6,11 +6,18 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
     }
   });
   
-  async function addGroupElement(groupName, isDefault = false) {
+  function addGroupElement(groupName) {
     const groupsDiv = document.getElementById('groups');
+  
+    // Check if the group element already exists to prevent duplicates
+    if (document.querySelector(`.group[data-name="${groupName}"]`)) {
+      return;
+    }
+  
     const groupElement = document.createElement('div');
     groupElement.className = 'group';
-    if (isDefault) {
+    groupElement.dataset.name = groupName;
+    if (groupName === "Default Group") {
       groupElement.dataset.default = "true";
     }
     groupElement.innerHTML = `
@@ -39,7 +46,7 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
   }
   
   function attachGroupClickListener(groupElement) {
-    const groupName = groupElement.querySelector('.group-name').textContent;
+    const groupName = groupElement.dataset.name;
     groupElement.addEventListener('click', async function () {
       await browser.runtime.sendMessage({ action: "switchGroup", groupName });
     });
@@ -75,13 +82,14 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
   function attachContextMenuListeners(contextMenu, groupElement) {
     const renameOption = contextMenu.querySelector('.rename-option');
     const deleteOption = contextMenu.querySelector('.delete-option');
-    const groupName = groupElement.querySelector('.group-name').textContent;
+    const groupName = groupElement.dataset.name;
   
     renameOption.addEventListener('click', async function () {
       const newName = prompt('Enter new group name:', groupName);
       if (newName && newName !== groupName) {
         await browser.runtime.sendMessage({ action: "renameGroup", oldName: groupName, newName: newName });
         groupElement.querySelector('.group-name').textContent = newName;
+        groupElement.dataset.name = newName;
       }
       closeContextMenu();
     });
@@ -112,13 +120,9 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
   
   // Initialize the groups from storage
   async function initializeGroups() {
-    const groupsDiv = document.getElementById('groups');
-    groupsDiv.innerHTML = ''; // Clear existing groups to prevent duplicates
-  
     const tabGroups = await browser.runtime.sendMessage({ action: "getGroups" });
     for (const groupName in tabGroups) {
-      const isDefault = groupName === "Default Group";
-      addGroupElement(groupName, isDefault);
+      addGroupElement(groupName);
     }
   }
   
