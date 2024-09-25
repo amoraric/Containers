@@ -1,18 +1,29 @@
-document.getElementById('addGroupButton').addEventListener('click', function () {
+document.getElementById('addGroupButton').addEventListener('click', async function () {
+    const groupName = prompt("Enter new group name:");
+    if (groupName) {
+      await browser.runtime.sendMessage({ action: "createGroup", groupName });
+      addGroupElement(groupName);
+    }
+  });
+  
+  async function addGroupElement(groupName, isDefault = false) {
     const groupsDiv = document.getElementById('groups');
-    const newGroup = document.createElement('div');
-    newGroup.className = 'group';
-    newGroup.innerHTML = `
+    const groupElement = document.createElement('div');
+    groupElement.className = 'group';
+    if (isDefault) {
+      groupElement.dataset.default = "true";
+    }
+    groupElement.innerHTML = `
       <div class="group-content">
-        <span class="group-name">New Group</span>
+        <span class="group-name">${groupName}</span>
         <span class="settings-icon">&#9881;</span>
       </div>
     `;
-    groupsDiv.appendChild(newGroup);
+    groupsDiv.appendChild(groupElement);
   
-    // Attach event listeners to the new group's settings icon
-    attachSettingsListener(newGroup);
-  });
+    attachSettingsListener(groupElement);
+    attachGroupClickListener(groupElement);
+  }
   
   function attachSettingsListener(groupElement) {
     const settingsIcon = groupElement.querySelector('.settings-icon');
@@ -25,6 +36,13 @@ document.getElementById('addGroupButton').addEventListener('click', function () 
     } else {
       console.error('Settings icon not found in group element:', groupElement);
     }
+  }
+  
+  function attachGroupClickListener(groupElement) {
+    const groupName = groupElement.querySelector('.group-name').textContent;
+    groupElement.addEventListener('click', async function () {
+      await browser.runtime.sendMessage({ action: "switchGroup", groupName });
+    });
   }
   
   function toggleContextMenu(groupElement) {
@@ -57,20 +75,22 @@ document.getElementById('addGroupButton').addEventListener('click', function () 
   function attachContextMenuListeners(contextMenu, groupElement) {
     const renameOption = contextMenu.querySelector('.rename-option');
     const deleteOption = contextMenu.querySelector('.delete-option');
+    const groupName = groupElement.querySelector('.group-name').textContent;
   
-    renameOption.addEventListener('click', function () {
-      const groupNameElement = groupElement.querySelector('.group-name');
-      const newName = prompt('Enter new group name:', groupNameElement.textContent);
-      if (newName) {
-        groupNameElement.textContent = newName;
+    renameOption.addEventListener('click', async function () {
+      const newName = prompt('Enter new group name:', groupName);
+      if (newName && newName !== groupName) {
+        await browser.runtime.sendMessage({ action: "renameGroup", oldName: groupName, newName: newName });
+        groupElement.querySelector('.group-name').textContent = newName;
       }
       closeContextMenu();
     });
   
-    deleteOption.addEventListener('click', function () {
+    deleteOption.addEventListener('click', async function () {
       if (groupElement.dataset.default === "true") {
         return;
       }
+      await browser.runtime.sendMessage({ action: "deleteGroup", groupName });
       groupElement.parentNode.removeChild(groupElement);
       closeContextMenu();
     });
@@ -90,7 +110,14 @@ document.getElementById('addGroupButton').addEventListener('click', function () 
     }
   });
   
-  document.querySelectorAll('.group').forEach(function (groupElement) {
-    attachSettingsListener(groupElement);
-  });
+  // Initialize the groups from storage
+  async function initializeGroups() {
+    const tabGroups = await browser.runtime.sendMessage({ action: "getGroups" });
+    for (const groupName in tabGroups) {
+      const isDefault = groupName === "Default Group";
+      addGroupElement(groupName, isDefault);
+    }
+  }
+  
+  initializeGroups();
   

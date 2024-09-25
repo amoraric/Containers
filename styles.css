@@ -7,7 +7,7 @@ body {
 }
 
 .group {
-  position: relative;       /* Position relative for absolute children */
+  position: relative;
   margin-bottom: 5px;
   background-color: #2e2e2e;
   border-radius: 5px;
@@ -19,9 +19,9 @@ body {
 }
 
 .group .group-content {
-  display: flex;            /* Use Flexbox */
-  align-items: center;      /* Vertical alignment */
-  justify-content: space-between; /* Space between items */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 10px;
 }
 
