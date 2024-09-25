@@ -112,6 +112,9 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
   
   // Initialize the groups from storage
   async function initializeGroups() {
+    const groupsDiv = document.getElementById('groups');
+    groupsDiv.innerHTML = ''; // Clear existing groups to prevent duplicates
+  
     const tabGroups = await browser.runtime.sendMessage({ action: "getGroups" });
     for (const groupName in tabGroups) {
       const isDefault = groupName === "Default Group";
@@ -120,4 +123,3 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
   }
   
   initializeGroups();
-  

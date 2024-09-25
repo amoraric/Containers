@@ -2,14 +2,16 @@ let currentGroupName = "Default Group";
 
 async function initializeDefaultGroup() {
   const groups = await browser.storage.local.get("tabGroups");
-  if (!groups.tabGroups) {
-    // No groups exist yet, create default group
+  if (!groups.tabGroups || !groups.tabGroups[currentGroupName]) {
+    console.log("Initializing default group");
+    // No groups exist yet or default group is missing, create default group
     const tabs = await browser.tabs.query({ currentWindow: true });
     const tabData = tabs.map(tab => ({ url: tab.url, pinned: tab.pinned }));
-    const tabGroups = {
-      [currentGroupName]: tabData
-    };
+    const tabGroups = groups.tabGroups || {};
+    tabGroups[currentGroupName] = tabData;
     await browser.storage.local.set({ tabGroups });
+  } else {
+    console.log("Default group already exists");
   }
 }
 
@@ -48,6 +50,7 @@ async function createNewGroup(groupName) {
 }
 
 async function switchToGroup(groupName) {
+  console.log(`Switching to group: ${groupName}`);
   const tabGroups = (await browser.storage.local.get("tabGroups")).tabGroups;
   if (!tabGroups || !tabGroups[groupName]) {
     console.error("Group does not exist");
@@ -62,14 +65,25 @@ async function switchToGroup(groupName) {
   // Update storage
   await browser.storage.local.set({ tabGroups });
 
-  // Close all current tabs
-  const tabIds = currentTabs.map(tab => tab.id);
-  await browser.tabs.remove(tabIds);
-
   // Open tabs from the new group
   const newGroupTabs = tabGroups[groupName];
-  for (const tabInfo of newGroupTabs) {
-    await browser.tabs.create({ url: tabInfo.url, pinned: tabInfo.pinned });
+
+  // Open the new tabs first
+  let firstNewTabId = null;
+  for (const [index, tabInfo] of newGroupTabs.entries()) {
+    const createdTab = await browser.tabs.create({ url: tabInfo.url, pinned: tabInfo.pinned });
+    if (index === 0) {
+      firstNewTabId = createdTab.id;
+    }
+  }
+
+  // Close all current tabs
+  const tabIdsToClose = currentTabs.map(tab => tab.id);
+  await browser.tabs.remove(tabIdsToClose);
+
+  // Focus on the first new tab
+  if (firstNewTabId) {
+    await browser.tabs.update(firstNewTabId, { active: true });
   }
 
   currentGroupName = groupName;
