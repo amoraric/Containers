@@ -155,4 +155,8 @@ async function initializeGroups() {
   await updateCurrentGroupName();
 }
 
+document.getElementById('saveLogsButton').addEventListener('click', async function () {
+    await browser.runtime.sendMessage({ action: "saveLogs" });
+  });  
+
 initializeGroups();

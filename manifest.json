@@ -5,7 +5,8 @@
     "description": "An extension that manages tab groups.",
     "permissions": [
       "tabs",
-      "storage"
+      "storage",
+      "downloads"
     ],
     "sidebar_action": {
       "default_title": "Tab Groups",
