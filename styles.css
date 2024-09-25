@@ -18,6 +18,10 @@ body {
   background-color: #3e3e3e;
 }
 
+.group.active {
+  background-color: #4e4e4e;
+}
+
 .group .group-content {
   display: flex;
   align-items: center;
@@ -27,6 +31,10 @@ body {
 
 .group .group-name {
   font-size: 16px;
+}
+
+.group.active .group-name {
+  color: #fff;
 }
 
 .group .settings-icon {
