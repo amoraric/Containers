@@ -48,6 +48,12 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
   function attachGroupClickListener(groupElement) {
     const groupName = groupElement.dataset.name;
     groupElement.addEventListener('click', async function () {
+      const { currentGroupName } = await browser.storage.local.get("currentGroupName");
+      if (groupName === currentGroupName) {
+        // Already in this group, do nothing
+        console.log("Already in group", groupName);
+        return;
+      }
       await browser.runtime.sendMessage({ action: "switchGroup", groupName });
     });
   }
