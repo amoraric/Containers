@@ -1,16 +1,13 @@
-/* styles.css */
-
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 10px;
-  background-color: #1e1e1e;  /* Dark background */
-  color: #ffffff;             /* Light text */
+  background-color: #1e1e1e; /* Dark background */
+  color: #ffffff;            /* Light text */
 }
 
 .group {
-  position: relative; /* Make group element a positioning context */
-  padding: 10px;
+  position: relative;       /* Position relative for absolute children */
   margin-bottom: 5px;
   background-color: #2e2e2e;
   border-radius: 5px;
@@ -21,21 +18,31 @@ body {
   background-color: #3e3e3e;
 }
 
-.group .settings-icon {
-  display: none;
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  cursor: pointer;
+.group .group-content {
+  display: flex;            /* Use Flexbox */
+  align-items: center;      /* Vertical alignment */
+  justify-content: space-between; /* Space between items */
+  padding: 10px;
 }
 
-.group:hover .settings-icon {
-  display: inline;
+.group .group-name {
+  font-size: 16px;
+}
+
+.group .settings-icon {
+  cursor: pointer;
+  font-size: 20px;
+  margin-left: 10px;
+  display: inline-block;
+}
+
+.group .settings-icon:hover {
+  color: #ccc;
 }
 
 #addGroupButton {
   padding: 10px 15px;
-  font-size: 14px;
+  font-size: 16px;
   margin-top: 10px;
   background-color: #3e3e3e;
   color: #fff;
@@ -49,8 +56,9 @@ body {
 }
 
 .context-menu {
-  display: none;
-  position: absolute; /* Position relative to parent */
+  position: absolute;
+  top: 100%;
+  right: 0;
   background-color: #2e2e2e;
   border: 1px solid #444;
   border-radius: 5px;
