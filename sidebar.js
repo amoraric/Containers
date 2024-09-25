@@ -26,9 +26,31 @@ document.getElementById('addGroupButton').addEventListener('click', function() {
   function showContextMenu(event, groupElement) {
     const contextMenu = document.getElementById('context-menu');
   
-    // Position the context menu near the settings icon
-    contextMenu.style.top = event.pageY + 'px';
-    contextMenu.style.left = event.pageX + 'px';
+    // Hide context menu before positioning
+    contextMenu.style.display = 'none';
+  
+    // Position the context menu relative to the group element
+    const groupRect = groupElement.getBoundingClientRect();
+    const sidebarRect = document.body.getBoundingClientRect();
+  
+    // Calculate the position within the sidebar
+    let topPosition = groupElement.offsetTop + groupElement.offsetHeight;
+    let leftPosition = groupElement.offsetLeft;
+  
+    // Adjust if the context menu would overflow the sidebar's bottom
+    const contextMenuHeight = contextMenu.offsetHeight || 100; // Default height if not rendered yet
+    if (topPosition + contextMenuHeight > sidebarRect.height) {
+      topPosition = groupElement.offsetTop - contextMenuHeight;
+    }
+  
+    // Adjust if the context menu would overflow the sidebar's right edge
+    const contextMenuWidth = contextMenu.offsetWidth || 150; // Default width
+    if (leftPosition + contextMenuWidth > sidebarRect.width) {
+      leftPosition = sidebarRect.width - contextMenuWidth - 10; // 10px padding
+    }
+  
+    contextMenu.style.top = topPosition + 'px';
+    contextMenu.style.left = leftPosition + 'px';
     contextMenu.style.display = 'block';
   
     // Set current group
