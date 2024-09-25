@@ -1,0 +1,79 @@
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 10px;
+    background-color: #1e1e1e;  /* Dark background */
+    color: #ffffff;             /* Light text */
+  }
+  
+  .group {
+    position: relative;
+    padding: 10px;
+    margin-bottom: 5px;
+    background-color: #2e2e2e;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .group:hover {
+    background-color: #3e3e3e;
+  }
+  
+  .group .settings-icon {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    cursor: pointer;
+  }
+  
+  .group:hover .settings-icon {
+    display: inline;
+  }
+  
+  #addGroupButton {
+    padding: 10px 15px;
+    font-size: 14px;
+    margin-top: 10px;
+    background-color: #3e3e3e;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  #addGroupButton:hover {
+    background-color: #4e4e4e;
+  }
+  
+  .context-menu {
+    display: none;
+    position: absolute;
+    background-color: #2e2e2e;
+    border: 1px solid #444;
+    border-radius: 5px;
+    z-index: 1000;
+  }
+  
+  .context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .context-menu li {
+    padding: 10px 15px;
+    cursor: pointer;
+  }
+  
+  .context-menu li:hover {
+    background-color: #3e3e3e;
+  }
+  
+  .context-menu .disabled {
+    color: #777;
+    cursor: not-allowed;
+  }
+  

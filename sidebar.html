@@ -3,26 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>Simple Sidebar</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 10px;
-    }
-    .group {
-      margin-bottom: 10px;
-    }
-    #addGroupButton {
-      padding: 5px 10px;
-      font-size: 14px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="groups">
-    <div class="group">Default Group</div>
+    <div class="group" data-default="true">
+      <span class="group-name">Default Group</span>
+      <span class="settings-icon">&#9881;</span>
+    </div>
   </div>
   <button id="addGroupButton">Add New Group</button>
+
+  <!-- Context Menu -->
+  <div id="context-menu" class="context-menu">
+    <ul>
+      <li class="rename-option">Rename</li>
+      <li class="delete-option">Delete</li>
+    </ul>
+  </div>
 
   <script src="sidebar.js"></script>
 </body>
