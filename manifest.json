@@ -5,7 +5,7 @@
     "description": "An extension that opens a sidebar with a default group and a button to add new groups.",
     "sidebar_action": {
       "default_title": "Simple Sidebar",
-      "default_panel": "sidebar.html",
+      "default_panel": "sidebar.html"
     },
     "browser_action": {
       "default_title": "Toggle Sidebar"
