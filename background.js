@@ -1,114 +1,118 @@
-let currentGroupName = "Default Group";
+async function initialize() {
+const { currentGroupName } = await browser.storage.local.get("currentGroupName");
+if (!currentGroupName) {
+    await browser.storage.local.set({ currentGroupName: "Default Group" });
+}
+
+await initializeDefaultGroup();
+}
 
 async function initializeDefaultGroup() {
-  const groups = await browser.storage.local.get("tabGroups");
-  if (!groups.tabGroups || !groups.tabGroups[currentGroupName]) {
-    // No groups exist yet, create default group
+const groups = await browser.storage.local.get("tabGroups");
+if (!groups.tabGroups || !groups.tabGroups["Default Group"]) {
+    // No default group exists yet, create it
     const tabs = await browser.tabs.query({ currentWindow: true });
     const tabData = tabs.map(tab => ({ url: tab.url, pinned: tab.pinned }));
     const tabGroups = {
-      [currentGroupName]: tabData
+    "Default Group": tabData
     };
     await browser.storage.local.set({ tabGroups });
-  }
+}
 }
 
-initializeDefaultGroup();
+initialize();
 
-// Listen for messages from the sidebar
 browser.runtime.onMessage.addListener(async (message, sender) => {
-  if (message.action === "createGroup") {
+if (message.action === "createGroup") {
     await createNewGroup(message.groupName);
-  } else if (message.action === "switchGroup") {
+} else if (message.action === "switchGroup") {
     await switchToGroup(message.groupName);
-  } else if (message.action === "deleteGroup") {
+} else if (message.action === "deleteGroup") {
     await deleteGroup(message.groupName);
-  } else if (message.action === "renameGroup") {
+} else if (message.action === "renameGroup") {
     await renameGroup(message.oldName, message.newName);
-  } else if (message.action === "getGroups") {
+} else if (message.action === "getGroups") {
     const groups = await browser.storage.local.get("tabGroups");
-    return Promise.resolve(groups.tabGroups || {});
-  }
+    return groups.tabGroups || {};
+}
 });
 
 async function createNewGroup(groupName) {
-  const tabGroups = (await browser.storage.local.get("tabGroups")).tabGroups || {};
-  if (tabGroups[groupName]) {
+const tabGroups = (await browser.storage.local.get("tabGroups")).tabGroups || {};
+if (tabGroups[groupName]) {
     console.error("Group already exists");
     return;
-  }
-  tabGroups[groupName] = [{ url: "about:newtab", pinned: false }];
-  await browser.storage.local.set({ tabGroups });
+}
+tabGroups[groupName] = [{ url: "about:newtab", pinned: false }];
+await browser.storage.local.set({ tabGroups });
 }
 
 async function switchToGroup(groupName) {
-  const tabGroupsData = await browser.storage.local.get("tabGroups");
-  const tabGroups = tabGroupsData.tabGroups;
-  if (!tabGroups || !tabGroups[groupName]) {
+const { tabGroups, currentGroupName } = await browser.storage.local.get(["tabGroups", "currentGroupName"]);
+if (!tabGroups || !tabGroups[groupName]) {
     console.error("Group does not exist");
     return;
-  }
+}
 
-  const currentWindow = await browser.windows.getCurrent();
+const currentWindow = await browser.windows.getCurrent();
 
-  // Save current tabs to current group
-  const currentTabs = await browser.tabs.query({ windowId: currentWindow.id });
-  const currentTabData = currentTabs.map(tab => ({ url: tab.url, pinned: tab.pinned }));
-  tabGroups[currentGroupName] = currentTabData;
+// Save current tabs to current group
+const currentTabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
+const currentTabData = currentTabs.map(tab => ({ url: tab.url, pinned: tab.pinned }));
+tabGroups[currentGroupName] = currentTabData;
 
-  // Update storage
-  await browser.storage.local.set({ tabGroups });
+// Update storage
+await browser.storage.local.set({ tabGroups });
 
-  // Open a temporary tab to prevent window from closing
-  const tempTab = await browser.tabs.create({ url: "about:blank", windowId: currentWindow.id });
+// Open a temporary tab to prevent window from closing
+const tempTab = await browser.tabs.create({ url: "about:blank", windowId: currentWindow.id });
 
-  // Close all current tabs except the temporary one
-  const tabIdsToClose = currentTabs.filter(tab => !tab.pinned).map(tab => tab.id);
-  await browser.tabs.remove(tabIdsToClose);
+// Close all current tabs except the temporary one and pinned tabs
+const tabIdsToClose = currentTabs.map(tab => tab.id);
+await browser.tabs.remove(tabIdsToClose);
 
-  // Open tabs from the new group
-  const newGroupTabs = tabGroups[groupName];
-  for (const tabInfo of newGroupTabs) {
+// Open tabs from the new group
+const newGroupTabs = tabGroups[groupName];
+for (const tabInfo of newGroupTabs) {
     await browser.tabs.create({ url: tabInfo.url, pinned: tabInfo.pinned, windowId: currentWindow.id });
-  }
+}
 
-  // Remove the temporary tab
-  await browser.tabs.remove(tempTab.id);
+// Remove the temporary tab
+await browser.tabs.remove(tempTab.id);
 
-  currentGroupName = groupName;
+// Update current group name
+await browser.storage.local.set({ currentGroupName: groupName });
 }
 
 async function deleteGroup(groupName) {
-  if (groupName === currentGroupName) {
+const { tabGroups, currentGroupName } = await browser.storage.local.get(["tabGroups", "currentGroupName"]);
+if (groupName === currentGroupName) {
     console.error("Cannot delete the currently active group");
     return;
-  }
-  const tabGroupsData = await browser.storage.local.get("tabGroups");
-  const tabGroups = tabGroupsData.tabGroups;
-  if (!tabGroups || !tabGroups[groupName]) {
+}
+if (!tabGroups || !tabGroups[groupName]) {
     console.error("Group does not exist");
     return;
-  }
-  delete tabGroups[groupName];
-  await browser.storage.local.set({ tabGroups });
+}
+delete tabGroups[groupName];
+await browser.storage.local.set({ tabGroups });
 }
 
 async function renameGroup(oldName, newName) {
-  const tabGroupsData = await browser.storage.local.get("tabGroups");
-  const tabGroups = tabGroupsData.tabGroups;
-  if (!tabGroups || !tabGroups[oldName]) {
+const { tabGroups, currentGroupName } = await browser.storage.local.get(["tabGroups", "currentGroupName"]);
+if (!tabGroups || !tabGroups[oldName]) {
     console.error("Group does not exist");
     return;
-  }
-  if (tabGroups[newName]) {
+}
+if (tabGroups[newName]) {
     console.error("A group with the new name already exists");
     return;
-  }
-  tabGroups[newName] = tabGroups[oldName];
-  delete tabGroups[oldName];
-  await browser.storage.local.set({ tabGroups });
+}
+tabGroups[newName] = tabGroups[oldName];
+delete tabGroups[oldName];
+await browser.storage.local.set({ tabGroups });
 
-  if (currentGroupName === oldName) {
-    currentGroupName = newName;
-  }
+if (currentGroupName === oldName) {
+    await browser.storage.local.set({ currentGroupName: newName });
+}
 }
