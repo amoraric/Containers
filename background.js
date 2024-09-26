@@ -251,21 +251,24 @@ async function switchToGroup(groupName) {
   
     // Close the old tabs
     if (currentTabIds.length > 0) {
-      try {
-        await browser.tabs.remove(currentTabIds);
-        log("Closed old tabs: " + currentTabIds.join(', '));
-      } catch (error) {
-        log("Error removing tabs: " + error);
+        try {
+          await browser.tabs.remove(currentTabIds);
+          log("Closed old tabs: " + currentTabIds.join(', '));
+        } catch (error) {
+          log("Error removing tabs: " + error);
+        }
       }
-    }
-  
-    // Re-register tab event listeners
-    registerTabListeners();
-    isSwitchingGroups = false;
-  
-    // Send a message to the sidebar to update the UI
-    browser.runtime.sendMessage({ action: "currentGroupChanged", currentGroupName });
-  }
+    
+      // **Update the stored tab data with new tab IDs**
+      await updateCurrentGroupTabs();
+    
+      // Re-register tab event listeners
+      registerTabListeners();
+      isSwitchingGroups = false;
+    
+      // Send a message to the sidebar to update the UI
+      browser.runtime.sendMessage({ action: "currentGroupChanged", currentGroupName });
+}
   
 
 // Function to save logs to a file

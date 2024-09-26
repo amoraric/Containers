@@ -26,13 +26,24 @@ async function initializeCurrentGroupName() {
 initializeCurrentGroupName();
 
 // Listen for messages from the background script
+// Listen for messages from the background script
 browser.runtime.onMessage.addListener((message) => {
     if (message.action === "currentGroupChanged") {
       console.log("Received currentGroupChanged message:", message);
       currentGroupName = message.currentGroupName;
       updateCurrentGroupHighlighting();
+  
+      // **Clear any open tabs lists to prevent displaying outdated tabs**
+      document.querySelectorAll('.tabs-list').forEach(tabsList => {
+        tabsList.parentNode.removeChild(tabsList);
+      });
+  
+      // **Optionally, update the arrow icons to default state**
+      document.querySelectorAll('.arrow-icon').forEach(arrowIcon => {
+        arrowIcon.textContent = '>';
+      });
     }
-  });
+  });  
 
 // Update the current group name and highlight it
 async function updateCurrentGroupName() {
@@ -126,36 +137,35 @@ function attachArrowClickListener(groupElement) {
     arrowIcon.addEventListener('click', async function (event) {
       event.stopPropagation(); // Prevent group click listener from firing
   
+      // **Always remove existing tabsList to prevent stale data**
       let tabsList = groupElement.querySelector('.tabs-list');
       if (tabsList) {
-        // Tabs are already displayed, toggle visibility
-        const isVisible = tabsList.style.display !== 'none';
-        tabsList.style.display = isVisible ? 'none' : 'block';
-        // Update arrow icon
-        arrowIcon.textContent = isVisible ? '>' : 'v';
-      } else {
-        // Fetch tabs and display them
-        const tabs = await getTabsForGroup(groupName);
-        if (tabs.length === 0) {
-          // No tabs to display
-          return;
-        }
-        tabsList = document.createElement('div');
-        tabsList.className = 'tabs-list';
-        tabs.forEach(tabInfo => {
-          const tabElement = document.createElement('div');
-          tabElement.className = 'tab-item';
-          tabElement.textContent = tabInfo.title || tabInfo.url;
-          tabElement.dataset.tabId = tabInfo.id; // Store tab ID for later
-          attachTabClickListener(tabElement, tabInfo);
-          tabsList.appendChild(tabElement);
-        });
-        groupElement.appendChild(tabsList);
-        // Update arrow icon
-        arrowIcon.textContent = 'v';
+        groupElement.removeChild(tabsList);
       }
+  
+      // Fetch tabs and display them
+      const tabs = await getTabsForGroup(groupName);
+      if (tabs.length === 0) {
+        // No tabs to display
+        // Update arrow icon
+        arrowIcon.textContent = '>';
+        return;
+      }
+      tabsList = document.createElement('div');
+      tabsList.className = 'tabs-list';
+      tabs.forEach(tabInfo => {
+        const tabElement = document.createElement('div');
+        tabElement.className = 'tab-item';
+        tabElement.textContent = tabInfo.title || tabInfo.url;
+        tabElement.dataset.tabId = tabInfo.id; // Store tab ID for later
+        attachTabClickListener(tabElement, tabInfo);
+        tabsList.appendChild(tabElement);
+      });
+      groupElement.appendChild(tabsList);
+      // Update arrow icon
+      arrowIcon.textContent = 'v';
     });
-  }  
+  }
   
 function attachTabClickListener(tabElement, tabInfo) {
     tabElement.addEventListener('click', async function (event) {
