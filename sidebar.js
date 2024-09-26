@@ -281,10 +281,11 @@ async function getTabsForGroup(groupName) {
       for (const groupName in tabGroups) {
         addGroupElement(groupName);
       }
+      // Move the initialization of currentGroupName after groups are added
       await initializeCurrentGroupName();
     } else {
       console.error("Failed to get groups:", response.error);
     }
   }
   
-  initializeGroups();
+  initializeGroups();  

@@ -1,11 +1,10 @@
-// background.js
-
 let logMessages = [];
 let tabCreatedListener = null;
 let tabRemovedListener = null;
 let tabUpdatedListener = null;
 let currentGroupName = null;
 let isSwitchingGroups = false;
+const DEFAULT_TAB_URL = 'about:blank';
 
 // Custom log function
 function log(message) {
@@ -138,112 +137,133 @@ async function updateCurrentGroupTabs() {
 }
 
 async function switchToGroup(groupName) {
-  if (isSwitchingGroups) {
-    log("Group switch already in progress");
-    return;
-  }
-  isSwitchingGroups = true;
-  log("Switching to group: " + groupName);
-  const { tabGroups } = await browser.storage.local.get("tabGroups");
-
-  if (groupName === currentGroupName) {
-    log("Already in group: " + groupName);
-    isSwitchingGroups = false;
-    return;
-  }
-
-  // Save current group's tabs before switching
-  await updateCurrentGroupTabs();
-
-  if (!tabGroups || !tabGroups[groupName]) {
-    log("Group does not exist: " + groupName);
-    console.error("Group does not exist");
-    isSwitchingGroups = false;
-    return;
-  }
-
-  // Update current group name in storage and local variable
-  currentGroupName = groupName;
-  await browser.storage.local.set({ currentGroupName });
-  log(`Updated current group to: ${currentGroupName}`);
-
-  // Disable tab event listeners to prevent interference
-  unregisterTabListeners();
-
-  const currentWindow = await browser.windows.getCurrent();
-  const currentWindowId = currentWindow.id;
-
-  // Open a temporary tab to prevent window from closing
-  let tempTab;
-  try {
-    tempTab = await browser.tabs.create({ url: "about:blank", windowId: currentWindowId });
-    log("Opened temporary tab with ID: " + tempTab.id);
-  } catch (error) {
-    log("Error opening temporary tab: " + error);
-    // Re-register event listeners before exiting
+    if (isSwitchingGroups) {
+      log("Group switch already in progress");
+      return;
+    }
+    isSwitchingGroups = true;
+    log("Switching to group: " + groupName);
+    const { tabGroups } = await browser.storage.local.get("tabGroups");
+  
+    if (groupName === currentGroupName) {
+      log("Already in group: " + groupName);
+      isSwitchingGroups = false;
+      return;
+    }
+  
+    // Save current group's tabs before switching
+    await updateCurrentGroupTabs();
+  
+    if (!tabGroups || !tabGroups[groupName]) {
+      log("Group does not exist: " + groupName);
+      console.error("Group does not exist");
+      isSwitchingGroups = false;
+      return;
+    }
+  
+    // Update current group name in storage and local variable
+    currentGroupName = groupName;
+    await browser.storage.local.set({ currentGroupName });
+    log(`Updated current group to: ${currentGroupName}`);
+  
+    // Disable tab event listeners to prevent interference
+    unregisterTabListeners();
+  
+    const currentWindow = await browser.windows.getCurrent();
+    const currentWindowId = currentWindow.id;
+  
+    // Get current tabs
+    const currentTabs = await browser.tabs.query({ windowId: currentWindowId, pinned: false });
+    const currentTabIds = currentTabs.map(tab => tab.id);
+  
+    // Open tabs from the new group
+    const newGroupTabs = tabGroups[groupName];
+    let newTabs = [];
+  
+    for (const tabInfo of newGroupTabs) {
+      let tabUrl = tabInfo.url;
+  
+      // Check for privileged URLs
+      if (tabUrl.startsWith('about:')) {
+        log(`Cannot open privileged URL: ${tabUrl}. Replacing with 'about:blank'.`);
+        tabUrl = 'about:blank';
+      }
+  
+      // Validate the URL
+      try {
+        new URL(tabUrl);
+      } catch (e) {
+        log(`Invalid URL detected: ${tabUrl}. Replacing with 'about:blank'.`);
+        tabUrl = 'about:blank';
+      }
+  
+      // Attempt to open the tab
+      try {
+        const newTab = await browser.tabs.create({
+            url: tabUrl,
+            pinned: tabInfo.pinned,
+            windowId: currentWindowId,
+            active: false,
+            index: tabInfo.index, // Use the saved index
+        });
+        log(`Opened new tab: ${newTab.id}, URL: ${tabUrl}`);
+        newTabs.push(newTab);
+      } catch (error) {
+        log(`Error opening tab with URL ${tabUrl}: ${error}`);
+      }
+    }
+  
+    // If no tabs were opened, open a default tab
+    if (newTabs.length === 0) {
+      try {
+        const newTab = await browser.tabs.create({ url: 'about:blank', windowId: currentWindowId });
+        log(`Opened default tab: ${newTab.id}`);
+        newTabs.push(newTab);
+      } catch (error) {
+        log(`Error opening default tab: ${error}`);
+      }
+    }
+  
+    // Activate the first new tab
+    try {
+      await browser.tabs.update(newTabs[0].id, { active: true });
+      log(`Activated tab: ${newTabs[0].id}`);
+    } catch (error) {
+      log(`Error activating tab ${newTabs[0].id}: ${error}`);
+    }
+  
+    // Close the old tabs
+    if (currentTabIds.length > 0) {
+      try {
+        await browser.tabs.remove(currentTabIds);
+        log("Closed old tabs: " + currentTabIds.join(', '));
+      } catch (error) {
+        log("Error removing tabs: " + error);
+      }
+    }
+  
+    // Re-register tab event listeners
     registerTabListeners();
     isSwitchingGroups = false;
-    return;
+  
+    // Send a message to the sidebar to update the UI
+    browser.runtime.sendMessage({ action: "currentGroupChanged", currentGroupName });
   }
+  
 
-  // Close all current tabs except pinned tabs and the temporary tab
-  const currentTabs = await browser.tabs.query({ windowId: currentWindowId, pinned: false });
-  const tabIdsToClose = currentTabs
-    .filter(tab => tab.id !== tempTab.id) // Exclude the temporary tab from being closed
-    .map(tab => tab.id);
+// Function to save logs to a file
+async function saveLogsToFile() {
+  const blob = new Blob([logMessages.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
 
-  log("Closing tabs: " + tabIdsToClose.join(', '));
+  await browser.downloads.download({
+    url: url,
+    filename: 'extension_logs.txt',
+    saveAs: true
+  });
 
-  if (tabIdsToClose.length > 0) {
-    try {
-      await browser.tabs.remove(tabIdsToClose);
-    } catch (error) {
-      log("Error removing tabs: " + error);
-    }
-  }
-
-  // Open tabs from the new group
-  const newGroupTabs = tabGroups[groupName];
-  for (const tabInfo of newGroupTabs) {
-    let tabUrl = tabInfo.url;
-
-    // Check for privileged URLs
-    if (tabUrl.startsWith('about:')) {
-      log(`Cannot open privileged URL: ${tabUrl}. Replacing with 'about:blank'.`);
-      tabUrl = 'about:blank';
-    }
-
-    // Validate the URL
-    try {
-      new URL(tabUrl);
-    } catch (e) {
-      log(`Invalid URL detected: ${tabUrl}. Replacing with 'about:blank'.`);
-      tabUrl = 'about:blank';
-    }
-
-    // Attempt to open the tab
-    try {
-      const newTab = await browser.tabs.create({ url: tabUrl, pinned: tabInfo.pinned, windowId: currentWindowId });
-      log(`Opened new tab: ${newTab.id}, URL: ${tabUrl}`);
-    } catch (error) {
-      log(`Error opening tab with URL ${tabUrl}: ${error}`);
-    }
-  }
-
-  // Remove the temporary tab
-  try {
-    await browser.tabs.remove(tempTab.id);
-    log("Removed temporary tab: " + tempTab.id);
-  } catch (error) {
-    log("Error removing temporary tab: " + error);
-  }
-
-  // Re-register tab event listeners
-  registerTabListeners();
-  isSwitchingGroups = false;
-
-  // Send a message to the sidebar to update the UI
-  browser.runtime.sendMessage({ action: "currentGroupChanged", currentGroupName });
+  URL.revokeObjectURL(url);
+  log("Logs saved to file.");
 }
 
 // Listen for messages from the sidebar
@@ -299,21 +319,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Function to save logs to a file
-async function saveLogsToFile() {
-  const blob = new Blob([logMessages.join('\n')], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-
-  await browser.downloads.download({
-    url: url,
-    filename: 'extension_logs.txt',
-    saveAs: true
-  });
-
-  URL.revokeObjectURL(url);
-  log("Logs saved to file.");
-}
-
 // Get groups from storage
 async function getGroups() {
   const groups = await browser.storage.local.get("tabGroups");
@@ -329,17 +334,9 @@ async function createNewGroup(groupName) {
   }
   const newTabGroups = tabGroups || {};
 
-  // Initialize with current tabs
-  const currentWindow = await browser.windows.getCurrent();
-  const tabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
-  const tabData = tabs.map(tab => ({
-    url: tab.url,
-    title: tab.title,
-    pinned: tab.pinned,
-    id: tab.id,
-  }));
+  // Initialize with an empty array of tabs
+  newTabGroups[groupName] = []; // Empty array means no tabs
 
-  newTabGroups[groupName] = tabData;
   await browser.storage.local.set({ tabGroups: newTabGroups });
   log("Created new group: " + groupName);
 }
