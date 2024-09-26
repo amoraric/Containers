@@ -24,7 +24,14 @@ async function initializeDefaultGroup() {
   if (!tabGroups || !tabGroups["Default Group"]) {
     const currentWindow = await browser.windows.getCurrent();
     const tabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
-    const tabData = tabs.map(tab => ({ url: tab.url, pinned: tab.pinned }));
+    const tabData = tabs.map(tab => ({
+      url: tab.url,
+      title: tab.title, // Ensure title is stored
+      pinned: tab.pinned,
+      id: tab.id,
+      windowId: tab.windowId,
+      index: tab.index,
+    }));
     const newTabGroups = tabGroups || {};
     newTabGroups["Default Group"] = tabData;
     await browser.storage.local.set({ tabGroups: newTabGroups });
@@ -86,7 +93,7 @@ async function updateCurrentGroupTabs() {
   const tabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
   const tabData = tabs.map(tab => ({
     url: tab.url,
-    title: tab.title,
+    title: tab.title, // Ensure title is stored
     pinned: tab.pinned,
     id: tab.id,
     windowId: tab.windowId,
@@ -95,6 +102,10 @@ async function updateCurrentGroupTabs() {
   const newTabGroups = tabGroups || {};
   newTabGroups[currentGroupName] = tabData;
   await browser.storage.local.set({ tabGroups: newTabGroups });
+  log(`Updated tabs for group: ${currentGroupName}`);
+
+  // Notify the sidebar to update the dropdown if it's the current group
+  browser.runtime.sendMessage({ action: "tabsUpdated", groupName: currentGroupName, tabs: tabData });
 }
 
 // Switch to a different group
@@ -115,8 +126,7 @@ async function switchToGroup(groupName) {
   unregisterTabListeners();
 
   const currentWindow = await browser.windows.getCurrent();
-  const currentTabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
-  const currentTabIds = currentTabs.map(tab => tab.id);
+  const currentTabIds = (await browser.tabs.query({ windowId: currentWindow.id, pinned: false })).map(tab => tab.id);
 
   const newGroupTabs = tabGroups[groupName];
   let newTabs = [];
@@ -158,19 +168,34 @@ async function switchToGroup(groupName) {
 // Listen for messages from the sidebar
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "createGroup") {
-    createNewGroup(message.groupName).then(() => sendResponse({ success: true }));
+    createNewGroup(message.groupName).then(() => sendResponse({ success: true })).catch((error) => {
+      console.error(error);
+      sendResponse({ success: false, error: error.message });
+    });
     return true;
   } else if (message.action === "switchGroup") {
-    switchToGroup(message.groupName).then(() => sendResponse({ success: true }));
+    switchToGroup(message.groupName).then(() => sendResponse({ success: true })).catch((error) => {
+      console.error(error);
+      sendResponse({ success: false, error: error.message });
+    });
     return true;
   } else if (message.action === "getGroups") {
-    getGroups().then((groups) => sendResponse({ success: true, groups }));
+    getGroups().then((groups) => sendResponse({ success: true, groups })).catch((error) => {
+      console.error(error);
+      sendResponse({ success: false, error: error.message });
+    });
     return true;
   } else if (message.action === "focusTab") {
-    focusTab(message.tabId, message.windowId).then(() => sendResponse({ success: true }));
+    focusTab(message.tabId, message.windowId).then(() => sendResponse({ success: true })).catch((error) => {
+      console.error('Error focusing on tab:', error);
+      sendResponse({ success: false, error: error.message });
+    });
     return true;
   } else if (message.action === "getTabsForGroup") {
-    getTabsForGroup(message.groupName).then((tabs) => sendResponse({ success: true, tabs }));
+    getTabsForGroup(message.groupName).then((tabs) => sendResponse({ success: true, tabs })).catch((error) => {
+      console.error('Error getting tabs for group:', error);
+      sendResponse({ success: false, error: error.message });
+    });
     return true;
   }
 });
@@ -195,7 +220,7 @@ async function getGroups() {
     const tabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
     const tabData = tabs.map(tab => ({
       url: tab.url,
-      title: tab.title,
+      title: tab.title, // Ensure title is stored
       pinned: tab.pinned,
       id: tab.id,
       windowId: tab.windowId,

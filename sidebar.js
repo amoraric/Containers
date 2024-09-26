@@ -30,13 +30,36 @@ initialize();
 
 // Listen for messages from the background script
 browser.runtime.onMessage.addListener((message) => {
-  if (message.action === "currentGroupChanged") {
-    currentGroupName = message.currentGroupName;
-    updateCurrentGroupHighlighting();
-    document.querySelectorAll('.tabs-list').forEach(tabsList => tabsList.remove());
-    document.querySelectorAll('.arrow-icon').forEach(arrowIcon => {
-      arrowIcon.textContent = '>';
-    });
+  if (message.action === "currentGroupChanged" || message.action === "tabsUpdated") {
+    if (message.action === "currentGroupChanged") {
+      currentGroupName = message.currentGroupName;
+      updateCurrentGroupHighlighting();
+    }
+    
+    // Only update the dropdown if it's the current group
+    const activeGroupElement = document.querySelector(`.group[data-name="${currentGroupName}"]`);
+    const tabsList = activeGroupElement?.querySelector('.tabs-list');
+    if (tabsList && message.action === "tabsUpdated") {
+      // Clear the existing tabs
+      tabsList.innerHTML = '';
+      // Add the updated tabs
+      message.tabs.forEach(tabInfo => {
+        const tabElement = document.createElement('div');
+        tabElement.className = 'tab-item';
+        tabElement.textContent = tabInfo.title; // Show only the title
+        tabElement.dataset.tabId = tabInfo.id;
+        attachTabClickListener(tabElement, tabInfo);
+        tabsList.appendChild(tabElement);
+      });
+    }
+
+    // Reset arrow icons to default state if necessary
+    if (message.action === "currentGroupChanged") {
+      document.querySelectorAll('.tabs-list').forEach(tabsList => tabsList.remove());
+      document.querySelectorAll('.arrow-icon').forEach(arrowIcon => {
+        arrowIcon.textContent = '>';
+      });
+    }
   }
 });
 
@@ -117,7 +140,7 @@ function attachArrowClickListener(groupElement) {
     tabs.forEach(tabInfo => {
       const tabElement = document.createElement('div');
       tabElement.className = 'tab-item';
-      tabElement.textContent = tabInfo.title || tabInfo.url;
+      tabElement.textContent = tabInfo.title; // Show only the title
       tabElement.dataset.tabId = tabInfo.id;
       attachTabClickListener(tabElement, tabInfo);
       tabsList.appendChild(tabElement);
