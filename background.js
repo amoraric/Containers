@@ -46,21 +46,36 @@ async function initializeDefaultGroup() {
   }
 }
 
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+  
+  // Wrap updateCurrentGroupTabs with debounce
+  const debouncedUpdateCurrentGroupTabs = debounce(updateCurrentGroupTabs, 500);  
+
 // Register tab event listeners
 function registerTabListeners() {
   // Tab created
   tabCreatedListener = async function(tab) {
     if (isSwitchingGroups) return;
     try {
-      if (tab.pinned) return;
+        if (tab.pinned) return;
 
-      const currentWindow = await browser.windows.getCurrent();
-      if (tab.windowId !== currentWindow.id) return;
+        const currentWindow = await browser.windows.getCurrent();
+        if (tab.windowId !== currentWindow.id) return;
 
-      log("Tab created: " + tab.url);
-      await updateCurrentGroupTabs();
+        log("Tab created: " + tab.url);
+        await debouncedUpdateCurrentGroupTabs();
     } catch (error) {
-      log("Error in tabCreatedListener: " + error);
+        log("Error in tabCreatedListener: " + error);
     }
   };
 
@@ -118,23 +133,25 @@ function unregisterTabListeners() {
 
 // Update the current group's tabs in storage
 async function updateCurrentGroupTabs() {
-  const currentWindow = await browser.windows.getCurrent();
-  const { tabGroups } = await browser.storage.local.get("tabGroups");
-
-  const tabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
-  const tabData = tabs.map(tab => ({
-    url: tab.url,
-    title: tab.title,
-    pinned: tab.pinned,
-    id: tab.id, // Include tab ID for debugging
-  }));
-
-  const newTabGroups = tabGroups || {};
-  newTabGroups[currentGroupName] = tabData;
-
-  await browser.storage.local.set({ tabGroups: newTabGroups });
-  log("Updated tabs for group: " + currentGroupName);
-}
+    const currentWindow = await browser.windows.getCurrent();
+    const { tabGroups } = await browser.storage.local.get("tabGroups");
+  
+    const tabs = await browser.tabs.query({ windowId: currentWindow.id, pinned: false });
+    const tabData = tabs.map(tab => ({
+        url: tab.url,
+        title: tab.title,
+        pinned: tab.pinned,
+        id: tab.id,
+        windowId: tab.windowId,
+        index: tab.index, // Include index
+    }));
+  
+    const newTabGroups = tabGroups || {};
+    newTabGroups[currentGroupName] = tabData;
+  
+    await browser.storage.local.set({ tabGroups: newTabGroups });
+    log("Updated tabs for group: " + currentGroupName);
+  }  
 
 async function switchToGroup(groupName) {
     if (isSwitchingGroups) {
@@ -316,8 +333,67 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ success: false, error: error.message });
     });
     return true;
+  } else if (message.action === "focusTab") {
+    focusTab(message.tabId, message.windowId).then(() => {
+      sendResponse({ success: true });
+    }).catch((error) => {
+      console.error('Error focusing on tab:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true;
+  } else if (message.action === "getTabsForGroup") {
+    getTabsForGroup(message.groupName).then((tabs) => {
+      sendResponse({ success: true, tabs });
+    }).catch((error) => {
+      console.error('Error getting tabs for group:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Indicate asynchronous response
   }
 });
+
+// Add the getTabsForGroup function
+async function getTabsForGroup(groupName) {
+    const { tabGroups } = await browser.storage.local.get("tabGroups");
+    if (tabGroups && tabGroups[groupName]) {
+      return tabGroups[groupName];
+    } else {
+      return [];
+    }
+  }
+
+async function findTabByIdOrUrl(tabId) {
+    // Retrieve the stored tabs for the current group
+    const { tabGroups } = await browser.storage.local.get("tabGroups");
+    const groupTabs = tabGroups[currentGroupName] || [];
+    const targetTabInfo = groupTabs.find(tab => tab.id === tabId);
+    if (targetTabInfo) {
+      // Find an open tab with the same URL
+      const tabs = await browser.tabs.query({ url: targetTabInfo.url });
+      return tabs.length > 0 ? tabs[0] : null;
+    }
+    return null;
+  }
+
+  async function focusTab(tabId, windowId) {
+    try {
+      // Try to update the tab by ID
+      await browser.tabs.update(tabId, { active: true });
+      // Focus the window
+      await browser.windows.update(windowId, { focused: true });
+    } catch (error) {
+      // If tab doesn't exist, search for a tab with the same URL
+      const tabInfo = await findTabByIdOrUrl(tabId);
+      if (tabInfo) {
+        // Activate the found tab
+        await browser.tabs.update(tabInfo.id, { active: true });
+        await browser.windows.update(tabInfo.windowId, { focused: true });
+      } else {
+        // Open the tab if it doesn't exist
+        await browser.tabs.create({ url: tabInfo.url });
+      }
+    }
+  }  
 
 // Get groups from storage
 async function getGroups() {

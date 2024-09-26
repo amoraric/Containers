@@ -32,7 +32,7 @@ browser.runtime.onMessage.addListener((message) => {
       currentGroupName = message.currentGroupName;
       updateCurrentGroupHighlighting();
     }
-});
+  });
 
 // Update the current group name and highlight it
 async function updateCurrentGroupName() {
@@ -101,15 +101,6 @@ function addGroupElement(groupName) {
     const iconsContainer = document.createElement('div');
     iconsContainer.className = 'icons-container';
   
-    // Settings Icon (exclude for Default Group)
-    if (groupName !== "Default Group") {
-    //   const settingsIcon = document.createElement('span');
-    //   settingsIcon.className = 'settings-icon';
-    //   settingsIcon.textContent = '⋮'; // Using a vertical ellipsis as a text symbol
-    //   iconsContainer.appendChild(settingsIcon);
-    //   attachSettingsListener(groupElement);
-    }
-  
     // Arrow Button
     const arrowButton = document.createElement('span');
     arrowButton.className = 'arrow-icon';
@@ -134,7 +125,8 @@ function attachArrowClickListener(groupElement) {
     const groupName = groupElement.dataset.name;
     arrowIcon.addEventListener('click', async function (event) {
       event.stopPropagation(); // Prevent group click listener from firing
-      const tabsList = groupElement.querySelector('.tabs-list');
+  
+      let tabsList = groupElement.querySelector('.tabs-list');
       if (tabsList) {
         // Tabs are already displayed, toggle visibility
         const isVisible = tabsList.style.display !== 'none';
@@ -144,16 +136,18 @@ function attachArrowClickListener(groupElement) {
       } else {
         // Fetch tabs and display them
         const tabs = await getTabsForGroup(groupName);
-        const tabsList = document.createElement('div');
+        if (tabs.length === 0) {
+          // No tabs to display
+          return;
+        }
+        tabsList = document.createElement('div');
         tabsList.className = 'tabs-list';
         tabs.forEach(tabInfo => {
           const tabElement = document.createElement('div');
           tabElement.className = 'tab-item';
           tabElement.textContent = tabInfo.title || tabInfo.url;
-          tabElement.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent group click listener
-            browser.tabs.create({ url: tabInfo.url });
-          });
+          tabElement.dataset.tabId = tabInfo.id; // Store tab ID for later
+          attachTabClickListener(tabElement, tabInfo);
           tabsList.appendChild(tabElement);
         });
         groupElement.appendChild(tabsList);
@@ -161,7 +155,26 @@ function attachArrowClickListener(groupElement) {
         arrowIcon.textContent = 'v';
       }
     });
-}  
+  }  
+  
+function attachTabClickListener(tabElement, tabInfo) {
+    tabElement.addEventListener('click', async function (event) {
+      event.stopPropagation(); // Prevent group click listener
+      try {
+        // Send message to background script to focus on the tab
+        const response = await browser.runtime.sendMessage({
+          action: 'focusTab',
+          tabId: tabInfo.id,
+          windowId: tabInfo.windowId,
+        });
+        if (!response || !response.success) {
+          console.error('Failed to focus on tab:', response ? response.error : 'Unknown error');
+        }
+      } catch (error) {
+        console.error('Error focusing on tab:', error);
+      }
+    });
+}
 
   function attachSettingsListener(groupElement) {
     const settingsIcon = groupElement.querySelector('.settings-icon');
@@ -263,15 +276,14 @@ document.addEventListener('click', function (event) {
 });
 
 async function getTabsForGroup(groupName) {
-    const { tabGroups } = await browser.storage.local.get("tabGroups");
-    if (tabGroups && tabGroups[groupName]) {
-      console.log(`Tabs for group "${groupName}":`, tabGroups[groupName]);
-      return tabGroups[groupName];
+    const response = await browser.runtime.sendMessage({ action: "getTabsForGroup", groupName });
+    if (response && response.success) {
+      return response.tabs;
     } else {
-      console.log(`No tabs found for group "${groupName}".`);
+      console.error("Failed to get tabs for group:", response.error);
       return [];
     }
-  }
+  }  
   
 
   async function initializeGroups() {

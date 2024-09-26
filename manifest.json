@@ -6,7 +6,9 @@
     "permissions": [
       "tabs",
       "storage",
-      "downloads"
+      "downloads",
+      "activeTab",
+      "<all_urls>"
     ],
     "sidebar_action": {
       "default_title": "Containers",
