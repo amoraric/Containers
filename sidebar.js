@@ -1,5 +1,39 @@
 let currentGroupName = null;
 
+// Update the current group highlighting in the UI
+function updateCurrentGroupHighlighting() {
+    // Remove 'active' class from all groups
+    document.querySelectorAll('.group').forEach(group => {
+      group.classList.remove('active');
+    });
+  
+    // Add 'active' class to the current group
+    const activeGroup = document.querySelector(`.group[data-name="${currentGroupName}"]`);
+    if (activeGroup) {
+      activeGroup.classList.add('active');
+    } else {
+      console.error("No group element found for currentGroupName:", currentGroupName);
+    }
+}
+
+// Initialize current group name
+async function initializeCurrentGroupName() {
+    const result = await browser.storage.local.get("currentGroupName");
+    currentGroupName = result.currentGroupName;
+    updateCurrentGroupHighlighting();
+}
+
+initializeCurrentGroupName();
+
+// Listen for messages from the background script
+browser.runtime.onMessage.addListener((message) => {
+    if (message.action === "currentGroupChanged") {
+      console.log("Received currentGroupChanged message:", message);
+      currentGroupName = message.currentGroupName;
+      updateCurrentGroupHighlighting();
+    }
+});
+
 // Update the current group name and highlight it
 async function updateCurrentGroupName() {
   const result = await browser.storage.local.get("currentGroupName");
@@ -18,12 +52,12 @@ async function updateCurrentGroupName() {
 }
 
 async function switchToGroup(groupName) {
-  const response = await browser.runtime.sendMessage({ action: "switchGroup", groupName });
-  if (response && response.success) {
-    await updateCurrentGroupName();
-  } else {
-    console.error("Failed to switch group:", response.error);
-  }
+    const response = await browser.runtime.sendMessage({ action: "switchGroup", groupName });
+    if (response && response.success) {
+      // No need to call updateCurrentGroupName here
+    } else {
+      console.error("Failed to switch group:", response.error);
+    }
 }
 
 document.getElementById('addGroupButton').addEventListener('click', async function () {
@@ -79,15 +113,10 @@ function attachSettingsListener(groupElement) {
 }
 
 function attachGroupClickListener(groupElement) {
-  const groupName = groupElement.dataset.name;
-  groupElement.addEventListener('click', async function () {
-    if (groupName === currentGroupName) {
-      // Already in this group, do nothing
-      console.log("Already in group", groupName);
-      return;
-    }
-    await switchToGroup(groupName);
-  });
+    const groupName = groupElement.dataset.name;
+    groupElement.addEventListener('click', async function () {
+      await switchToGroup(groupName);
+    });
 }
 
 function toggleContextMenu(groupElement) {
