@@ -2,8 +2,8 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 10px;
-  background-color: #1e1e1e; /* Dark background */
-  color: #ffffff;            /* Light text */
+  background-color: #1e1e1e;
+  color: #ffffff;
 }
 
 .group {
@@ -22,95 +22,60 @@ body {
   background-color: #4e4e4e;
 }
 
-.group .group-content {
+.group-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px;
 }
 
-.group .group-name {
+.group-name {
   font-size: 16px;
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 10px;
 }
 
 .group.active .group-name {
   color: #fff;
 }
 
-.group .settings-icon {
-  cursor: pointer;
-  font-size: 20px;
-  margin-left: 10px;
-  display: inline-block;
+.icons-container {
+  display: flex;
+  align-items: center;
 }
 
-.group .settings-icon:hover {
+.settings-icon,
+.arrow-icon {
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+  display: inline-block;
+  color: #fff;
+}
+
+.settings-icon:hover,
+.arrow-icon:hover {
   color: #ccc;
 }
 
-.group-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-  }  
-  
-  .icons-container {
-    display: flex;
-    align-items: center;
-  }
-  
-  .settings-icon {
-    cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
-    display: inline-block;
-  }
-  
-  .settings-icon:hover {
-    color: #ccc;
-  }
-  
-  .arrow-icon {
-    cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
-    display: inline-block;
-    color: #fff; /* Set to white or another contrasting color */
-  }
-  
-  .arrow-icon:hover {
-    color: #ccc;
-  }
-  
-  /* Adjust the group-name to prevent text overlap */
-  .group-name {
-    flex-grow: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-right: 10px; /* Add some margin to prevent overlap */
-  }
-  
-  .tabs-list {
-    display: none;
-    padding-left: 20px;
-  }
-  
-  .tab-item {
-    padding: 5px 0;
-    font-size: 14px;
-    color: #ccc;
-    cursor: pointer;
-  }
-  
-  .tab-item:hover {
-    color: #fff;
-  }
-  
-  /* .group .arrow-icon.active {
-    transform: rotate(90deg);
-  } */
+.tabs-list {
+  display: none;
+  padding-left: 20px;
+}
+
+.tab-item {
+  padding: 5px 0;
+  font-size: 14px;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.tab-item:hover {
+  color: #fff;
+}
 
 #addGroupButton {
   padding: 10px 15px;
