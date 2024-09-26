@@ -48,6 +48,68 @@ body {
   color: #ccc;
 }
 
+.group-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+  }
+  
+  .icons-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .settings-icon {
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+    display: inline-block;
+  }
+  
+  .settings-icon:hover {
+    color: #ccc;
+  }
+  
+  .arrow-icon {
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+    display: inline-block;
+  }
+  
+  .arrow-icon:hover {
+    color: #ccc;
+  }
+  
+  /* Adjust the group-name to prevent text overlap */
+  .group-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .tabs-list {
+    display: none;
+    padding-left: 20px;
+  }
+  
+  .tab-item {
+    padding: 5px 0;
+    font-size: 14px;
+    color: #ccc;
+    cursor: pointer;
+  }
+  
+  .tab-item:hover {
+    color: #fff;
+  }
+  
+  /* .group .arrow-icon.active {
+    transform: rotate(90deg);
+  } */
+
 #addGroupButton {
   padding: 10px 15px;
   font-size: 16px;

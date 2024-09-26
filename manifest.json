@@ -1,15 +1,15 @@
 {
     "manifest_version": 2,
-    "name": "Tab Groups Sidebar Extension",
+    "name": "Tab Containers",
     "version": "1.0",
-    "description": "An extension that manages tab groups.",
+    "description": "Personal extension that manages tab containers",
     "permissions": [
       "tabs",
       "storage",
       "downloads"
     ],
     "sidebar_action": {
-      "default_title": "Tab Groups",
+      "default_title": "Containers",
       "default_panel": "sidebar.html",
       "default_icon": {
         "16": "icons/icon16.png",
@@ -27,6 +27,15 @@
     },
     "background": {
       "scripts": ["background.js"]
+    },
+    "commands": {
+      "_execute_sidebar_action": {
+        "suggested_key": {
+          "default": "Ctrl+Shift+Y",
+          "mac": "Command+Shift+Y"
+        },
+        "description": "Toggle Tab Groups Sidebar"
+      }
     }
   }
   

@@ -74,48 +74,115 @@ document.getElementById('addGroupButton').addEventListener('click', async functi
 });
 
 function addGroupElement(groupName) {
-  const groupsDiv = document.getElementById('groups');
-
-  // Check if the group element already exists to prevent duplicates
-  if (document.querySelector(`.group[data-name="${groupName}"]`)) {
-    return;
-  }
-
-  const groupElement = document.createElement('div');
-  groupElement.className = 'group';
-  groupElement.dataset.name = groupName;
-  if (groupName === "Default Group") {
-    groupElement.dataset.default = "true";
-  }
-  groupElement.innerHTML = `
-    <div class="group-content">
-      <span class="group-name">${groupName}</span>
-      <span class="settings-icon">&#9881;</span>
-    </div>
-  `;
-  groupsDiv.appendChild(groupElement);
-
-  attachSettingsListener(groupElement);
-  attachGroupClickListener(groupElement);
+    const groupsDiv = document.getElementById('groups');
+  
+    // Check if the group element already exists to prevent duplicates
+    if (document.querySelector(`.group[data-name="${groupName}"]`)) {
+      return;
+    }
+  
+    const groupElement = document.createElement('div');
+    groupElement.className = 'group';
+    groupElement.dataset.name = groupName;
+    if (groupName === "Default Group") {
+      groupElement.dataset.default = "true";
+    }
+  
+    // Create the group content
+    const groupContent = document.createElement('div');
+    groupContent.className = 'group-content';
+  
+    // Group Name
+    const groupNameSpan = document.createElement('span');
+    groupNameSpan.className = 'group-name';
+    groupNameSpan.textContent = groupName;
+  
+    // Icons Container
+    const iconsContainer = document.createElement('div');
+    iconsContainer.className = 'icons-container';
+  
+    // Settings Icon (exclude for Default Group)
+    if (groupName !== "Default Group") {
+    //   const settingsIcon = document.createElement('span');
+    //   settingsIcon.className = 'settings-icon';
+    //   settingsIcon.textContent = '⋮'; // Using a vertical ellipsis as a text symbol
+    //   iconsContainer.appendChild(settingsIcon);
+    //   attachSettingsListener(groupElement);
+    }
+  
+    // Arrow Button
+    const arrowButton = document.createElement('span');
+    arrowButton.className = 'arrow-icon';
+    arrowButton.textContent = '>'; // Using '>' as the arrow symbol
+    iconsContainer.appendChild(arrowButton);
+  
+    // Append elements
+    groupContent.appendChild(groupNameSpan);
+    groupContent.appendChild(iconsContainer);
+  
+    groupElement.appendChild(groupContent);
+    groupsDiv.appendChild(groupElement);
+  
+    // Attach click listeners
+    attachGroupClickListener(groupElement);
+    attachArrowClickListener(groupElement);
 }
-
-function attachSettingsListener(groupElement) {
-  const settingsIcon = groupElement.querySelector('.settings-icon');
-
-  if (settingsIcon) {
-    settingsIcon.addEventListener('click', function (event) {
-      event.stopPropagation();
-      toggleContextMenu(groupElement);
+  
+  
+function attachArrowClickListener(groupElement) {
+    const arrowIcon = groupElement.querySelector('.arrow-icon');
+    const groupName = groupElement.dataset.name;
+    arrowIcon.addEventListener('click', async function (event) {
+      event.stopPropagation(); // Prevent group click listener from firing
+      const tabsList = groupElement.querySelector('.tabs-list');
+      if (tabsList) {
+        // Tabs are already displayed, toggle visibility
+        const isVisible = tabsList.style.display !== 'none';
+        tabsList.style.display = isVisible ? 'none' : 'block';
+        // Update arrow icon
+        arrowIcon.textContent = isVisible ? '>' : 'v';
+      } else {
+        // Fetch tabs and display them
+        const tabs = await getTabsForGroup(groupName);
+        const tabsList = document.createElement('div');
+        tabsList.className = 'tabs-list';
+        tabs.forEach(tabInfo => {
+          const tabElement = document.createElement('div');
+          tabElement.className = 'tab-item';
+          tabElement.textContent = tabInfo.title || tabInfo.url;
+          tabElement.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent group click listener
+            browser.tabs.create({ url: tabInfo.url });
+          });
+          tabsList.appendChild(tabElement);
+        });
+        groupElement.appendChild(tabsList);
+        // Update arrow icon
+        arrowIcon.textContent = 'v';
+      }
     });
-  } else {
-    console.error('Settings icon not found in group element:', groupElement);
-  }
-}
+}  
+
+  function attachSettingsListener(groupElement) {
+    const settingsIcon = groupElement.querySelector('.settings-icon');
+  
+    if (settingsIcon) {
+      settingsIcon.addEventListener('click', function (event) {
+        event.stopPropagation(); // Prevent group click listener from firing
+        toggleContextMenu(groupElement);
+      });
+    } else {
+      console.error('Settings icon not found in group element:', groupElement);
+    }
+  }  
 
 function attachGroupClickListener(groupElement) {
     const groupName = groupElement.dataset.name;
     groupElement.addEventListener('click', async function () {
       await switchToGroup(groupName);
+      // Update current group highlighting
+      currentGroupName = groupName;
+      updateCurrentGroupHighlighting();
     });
 }
 
@@ -195,18 +262,29 @@ document.addEventListener('click', function (event) {
   }
 });
 
-// Initialize the groups from storage
-async function initializeGroups() {
-  const response = await browser.runtime.sendMessage({ action: "getGroups" });
-  if (response && response.success) {
-    const tabGroups = response.groups;
-    for (const groupName in tabGroups) {
-      addGroupElement(groupName);
+async function getTabsForGroup(groupName) {
+    const { tabGroups } = await browser.storage.local.get("tabGroups");
+    if (tabGroups && tabGroups[groupName]) {
+      console.log(`Tabs for group "${groupName}":`, tabGroups[groupName]);
+      return tabGroups[groupName];
+    } else {
+      console.log(`No tabs found for group "${groupName}".`);
+      return [];
     }
-    await updateCurrentGroupName();
-  } else {
-    console.error("Failed to get groups:", response.error);
   }
-}
+  
 
-initializeGroups();
+  async function initializeGroups() {
+    const response = await browser.runtime.sendMessage({ action: "getGroups" });
+    if (response && response.success) {
+      const tabGroups = response.groups;
+      for (const groupName in tabGroups) {
+        addGroupElement(groupName);
+      }
+      await initializeCurrentGroupName();
+    } else {
+      console.error("Failed to get groups:", response.error);
+    }
+  }
+  
+  initializeGroups();
