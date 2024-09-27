@@ -61,12 +61,11 @@ body {
   margin-right: 10px;
 }
 
-/* Arrow Icon */
 .arrow-icon {
   cursor: pointer;
   font-size: 16px;
   color: #ffffff;
-  transition: color 0.3s ease;
+  transition: transform 0.3s ease, color 0.3s ease;
 }
 
 .arrow-icon:hover {
@@ -80,6 +79,8 @@ body {
 }
 
 .tab-item {
+  display: flex; 
+  align-items: center; 
   padding: 8px 0;
   font-size: 15px;
   color: rgba(255, 255, 255, 0.7);
@@ -89,6 +90,16 @@ body {
 
 .tab-item:hover {
   color: rgba(255, 255, 255, 0.9);
+}
+
+/* Favicon image styling */
+.tab-favicon {
+  width: 16px;
+  height: 16px;
+  margin-right: 10px;
+  opacity: 0.8; /* Increased opacity for better visibility */
+  border-radius: 3px; /* Optional: adds slight rounding to icons */
+  object-fit: cover; /* Ensures the icon fits within the bounds */
 }
 
 /* Button Styles */

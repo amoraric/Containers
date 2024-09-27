@@ -36,5 +36,8 @@
       },
       "description": "Toggle Tab Groups Sidebar"
     }
-  }
+  },
+  "web_accessible_resources": [
+    "icons/mozilla-firefox-icon.png"
+  ]
 }
