@@ -1,3 +1,5 @@
+// sidebar.js
+
 let currentGroupName = null;
 
 // Helper function to extract domain from a URL
@@ -13,7 +15,10 @@ function getDomain(url) {
 
 // Update the current group highlighting in the UI
 function updateCurrentGroupHighlighting() {
+  // Remove 'active' class from all groups
   document.querySelectorAll('.group').forEach(group => group.classList.remove('active'));
+
+  // Add 'active' class to the current group
   const activeGroup = document.querySelector(`.group[data-name="${currentGroupName}"]`);
   if (activeGroup) {
     activeGroup.classList.add('active');
@@ -30,14 +35,52 @@ async function initialize() {
   const response = await browser.runtime.sendMessage({ action: "getGroups" });
   if (response && response.success) {
     const tabGroups = response.groups;
-    for (const groupName in tabGroups) {
-      addGroupElement(groupName);
+
+    // Render the default group separately
+    if (tabGroups['Default Group']) {
+      updateDefaultGroup(tabGroups['Default Group']);
     }
+
+    // Render other groups under "Other Containers"
+    for (const groupName in tabGroups) {
+      if (groupName !== 'Default Group') {
+        addGroupElement(groupName);
+      }
+    }
+
     updateCurrentGroupHighlighting();
+
+    // **Attach Event Listeners to the Default Group**
+    const defaultGroupElement = document.getElementById('defaultGroup');
+    attachGroupClickListener(defaultGroupElement);
+    attachArrowClickListener(defaultGroupElement);
   }
 }
 
 initialize();
+
+// Function to update the default group's tab count and list
+function updateDefaultGroup(tabs) {
+  const defaultTabCountSpan = document.getElementById('defaultGroupName');
+  defaultTabCountSpan.textContent = formatTabCount(tabs.length);
+
+  const defaultGroupElement = document.getElementById('defaultGroup');
+  const tabsList = defaultGroupElement.querySelector('.tabs-list');
+
+  // Clear existing tabs
+  tabsList.innerHTML = '';
+
+  // Add tabs to the default group
+  tabs.forEach(tabInfo => {
+    const tabElement = createTabElement(tabInfo);
+    tabsList.appendChild(tabElement);
+  });
+}
+
+// Function to format tab count (e.g., "1 Tab" vs. "4 Tabs")
+function formatTabCount(count) {
+  return `${count} Tab${count !== 1 ? 's' : ''}`;
+}
 
 // Listen for messages from the background script
 browser.runtime.onMessage.addListener((message) => {
@@ -47,51 +90,21 @@ browser.runtime.onMessage.addListener((message) => {
   } else if (message.action === "tabsUpdated") {
     const groupName = message.groupName;
     const tabs = message.tabs;
-    const groupElement = document.querySelector(`.group[data-name="${groupName}"]`);
-    if (groupElement) {
-      const tabsList = groupElement.querySelector('.tabs-list');
-      if (tabsList) {
-        // Clear the existing tabs
-        tabsList.innerHTML = '';
-        // Add the updated tabs
-        tabs.forEach(tabInfo => {
-          const tabElement = document.createElement('div');
-          tabElement.className = 'tab-item';
-
-          // Create a favicon img element
-          const faviconImg = document.createElement('img');
-          faviconImg.className = 'tab-favicon';
-          faviconImg.src = 'icons/loading-placeholder.png'; // Placeholder while loading
-
-          // Set favicon based on tab URL after placeholder is set
-          if (tabInfo.url.startsWith('about:') || !tabInfo.url) {
-            faviconImg.src = 'icons/default-icon.png'; // Fallback to default icon
-          } else {
-            const domain = getDomain(tabInfo.url);
-            if (domain) {
-              faviconImg.src = `https://www.google.com/s2/favicons?sz=16&domain=${encodeURIComponent(domain)}`;
-            } else {
-              faviconImg.src = 'icons/default-icon.png'; // Fallback if domain extraction fails
-            }
-          }
-
-          faviconImg.onerror = function() {
-            this.src = 'icons/default-icon.png'; // Fallback to default icon if favicon fails to load
-          };
-
-          // Create a span for the tab title and assign 'tab-title' class
-          const tabTitle = document.createElement('span');
-          tabTitle.className = 'tab-title'; // **Added Class**
-          tabTitle.textContent = tabInfo.title || 'Untitled'; // Handle empty titles
-
-          // Append the favicon and title to the tab element
-          tabElement.appendChild(faviconImg);
-          tabElement.appendChild(tabTitle);
-
-          tabElement.dataset.tabId = tabInfo.id;
-          attachTabClickListener(tabElement, tabInfo);
-          tabsList.appendChild(tabElement);
-        });
+    if (groupName === 'Default Group') {
+      updateDefaultGroup(tabs);
+    } else {
+      const groupElement = document.querySelector(`.group[data-name="${groupName}"]`);
+      if (groupElement) {
+        const tabsList = groupElement.querySelector('.tabs-list');
+        if (tabsList) {
+          // Clear the existing tabs
+          tabsList.innerHTML = '';
+          // Add the updated tabs
+          tabs.forEach(tabInfo => {
+            const tabElement = createTabElement(tabInfo);
+            tabsList.appendChild(tabElement);
+          });
+        }
       }
     }
   }
@@ -125,25 +138,17 @@ function addGroupElement(groupName) {
   groupNameSpan.className = 'group-name';
   groupNameSpan.textContent = groupName;
 
-  const iconsContainer = document.createElement('div');
-  iconsContainer.className = 'icons-container';
-
   const arrowButton = document.createElement('span');
   arrowButton.className = 'arrow-icon';
   arrowButton.textContent = '>'; // Initial state
 
-  iconsContainer.appendChild(arrowButton);
-
   groupContent.appendChild(groupNameSpan);
-  groupContent.appendChild(iconsContainer);
+  groupContent.appendChild(arrowButton);
   groupElement.appendChild(groupContent);
   groupsDiv.appendChild(groupElement);
 
   attachGroupClickListener(groupElement);
   attachArrowClickListener(groupElement);
-
-  // Automatically Open Dropdown
-  arrowButton.click();
 }
 
 function attachArrowClickListener(groupElement) {
@@ -169,43 +174,9 @@ function attachArrowClickListener(groupElement) {
     tabsList = document.createElement('div');
     tabsList.className = 'tabs-list';
 
-    // Render each tab and ensure favicon is added
+    // Render each tab
     tabs.forEach(tabInfo => {
-      const tabElement = document.createElement('div');
-      tabElement.className = 'tab-item';
-    
-      // Create a favicon img element
-      const faviconImg = document.createElement('img');
-      faviconImg.className = 'tab-favicon';
-      faviconImg.src = 'icons/loading-placeholder.png'; // Placeholder while loading
-    
-      // Set favicon based on tab URL after placeholder is set
-      if (tabInfo.url.startsWith('about:') || !tabInfo.url) {
-        faviconImg.src = 'icons/default-icon.png'; // Fallback to default icon
-      } else {
-        const domain = getDomain(tabInfo.url);
-        if (domain) {
-          faviconImg.src = `https://www.google.com/s2/favicons?sz=16&domain=${encodeURIComponent(domain)}`;
-        } else {
-          faviconImg.src = 'icons/default-icon.png'; // Fallback if domain extraction fails
-        }
-      }
-    
-      faviconImg.onerror = function() {
-        this.src = 'icons/default-icon.png'; // Fallback to default icon if favicon fails to load
-      };
-    
-      // Create a span for the tab title and assign 'tab-title' class
-      const tabTitle = document.createElement('span');
-      tabTitle.className = 'tab-title'; // **Added Class**
-      tabTitle.textContent = tabInfo.title || 'Untitled'; // Handle empty titles
-    
-      // Append the favicon and title to the tab element
-      tabElement.appendChild(faviconImg);
-      tabElement.appendChild(tabTitle);
-    
-      tabElement.dataset.tabId = tabInfo.id;
-      attachTabClickListener(tabElement, tabInfo);
+      const tabElement = createTabElement(tabInfo);
       tabsList.appendChild(tabElement);
     });
 
@@ -268,4 +239,44 @@ function attachTabClickListener(tabElement, tabInfo) {
 async function getTabsForGroup(groupName) {
   const response = await browser.runtime.sendMessage({ action: "getTabsForGroup", groupName });
   return response && response.success ? response.tabs : [];
+}
+
+// Helper function to create a tab element
+function createTabElement(tabInfo) {
+  const tabElement = document.createElement('div');
+  tabElement.className = 'tab-item';
+
+  // Create a favicon img element
+  const faviconImg = document.createElement('img');
+  faviconImg.className = 'tab-favicon';
+  faviconImg.src = 'icons/loading-placeholder.png'; // Placeholder while loading
+
+  // Set favicon based on tab URL after placeholder is set
+  if (tabInfo.url.startsWith('about:') || !tabInfo.url) {
+    faviconImg.src = 'icons/default-icon.png'; // Fallback to default icon
+  } else {
+    const domain = getDomain(tabInfo.url);
+    if (domain) {
+      faviconImg.src = `https://www.google.com/s2/favicons?sz=16&domain=${encodeURIComponent(domain)}`;
+    } else {
+      faviconImg.src = 'icons/default-icon.png'; // Fallback if domain extraction fails
+    }
+  }
+
+  faviconImg.onerror = function() {
+    this.src = 'icons/default-icon.png'; // Fallback to default icon if favicon fails to load
+  };
+
+  // Create a span for the tab title and assign 'tab-title' class
+  const tabTitle = document.createElement('span');
+  tabTitle.className = 'tab-title'; // **Added Class**
+  tabTitle.textContent = tabInfo.title || 'Untitled'; // Handle empty titles
+
+  // Append the favicon and title to the tab element
+  tabElement.appendChild(faviconImg);
+  tabElement.appendChild(tabTitle);
+
+  tabElement.dataset.tabId = tabInfo.id;
+  attachTabClickListener(tabElement, tabInfo);
+  return tabElement;
 }
