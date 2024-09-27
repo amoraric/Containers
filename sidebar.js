@@ -6,6 +6,7 @@ function getDomain(url) {
     const parsedUrl = new URL(url);
     return parsedUrl.hostname;
   } catch (e) {
+    console.error(`Invalid URL encountered: ${url}`);
     return null;
   }
 }
@@ -78,8 +79,9 @@ browser.runtime.onMessage.addListener((message) => {
             this.src = 'icons/default-icon.png'; // Fallback to default icon if favicon fails to load
           };
 
-          // Create a span for the tab title
+          // Create a span for the tab title and assign 'tab-title' class
           const tabTitle = document.createElement('span');
+          tabTitle.className = 'tab-title'; // **Added Class**
           tabTitle.textContent = tabInfo.title || 'Untitled'; // Handle empty titles
 
           // Append the favicon and title to the tab element
@@ -171,12 +173,12 @@ function attachArrowClickListener(groupElement) {
     tabs.forEach(tabInfo => {
       const tabElement = document.createElement('div');
       tabElement.className = 'tab-item';
-
+    
       // Create a favicon img element
       const faviconImg = document.createElement('img');
       faviconImg.className = 'tab-favicon';
       faviconImg.src = 'icons/loading-placeholder.png'; // Placeholder while loading
-
+    
       // Set favicon based on tab URL after placeholder is set
       if (tabInfo.url.startsWith('about:') || !tabInfo.url) {
         faviconImg.src = 'icons/default-icon.png'; // Fallback to default icon
@@ -188,19 +190,20 @@ function attachArrowClickListener(groupElement) {
           faviconImg.src = 'icons/default-icon.png'; // Fallback if domain extraction fails
         }
       }
-
+    
       faviconImg.onerror = function() {
         this.src = 'icons/default-icon.png'; // Fallback to default icon if favicon fails to load
       };
-
-      // Create a span for the tab title
+    
+      // Create a span for the tab title and assign 'tab-title' class
       const tabTitle = document.createElement('span');
+      tabTitle.className = 'tab-title'; // **Added Class**
       tabTitle.textContent = tabInfo.title || 'Untitled'; // Handle empty titles
-
+    
       // Append the favicon and title to the tab element
       tabElement.appendChild(faviconImg);
       tabElement.appendChild(tabTitle);
-
+    
       tabElement.dataset.tabId = tabInfo.id;
       attachTabClickListener(tabElement, tabInfo);
       tabsList.appendChild(tabElement);

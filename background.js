@@ -44,11 +44,12 @@ function debounce(func, wait) {
   let timeout;
   return function (...args) {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => func.apply(this, args), wait);
   };
 }
 
-const debouncedUpdateCurrentGroupTabs = debounce(updateCurrentGroupTabs, 500);
+// Reduce debounce time to 200ms
+const debouncedUpdateCurrentGroupTabs = debounce(updateCurrentGroupTabs, 200);
 
 // Register tab event listeners
 function registerTabListeners() {
@@ -76,14 +77,14 @@ async function tabRemovedListener(tabId, removeInfo) {
   if (isSwitchingGroups) return;
   const currentWindow = await browser.windows.getCurrent();
   if (removeInfo.windowId !== currentWindow.id) return;
-  updateCurrentGroupTabs();
+  debouncedUpdateCurrentGroupTabs(); // Use debounced function
 }
 
 async function tabUpdatedListener(tabId, changeInfo, tab) {
   if (isSwitchingGroups || tab.pinned) return;
   const currentWindow = await browser.windows.getCurrent();
   if (tab.windowId !== currentWindow.id || !changeInfo.url) return;
-  updateCurrentGroupTabs();
+  debouncedUpdateCurrentGroupTabs();
 }
 
 // Update the current group's tabs in storage
@@ -104,7 +105,7 @@ async function updateCurrentGroupTabs() {
   await browser.storage.local.set({ tabGroups: newTabGroups });
   log(`Updated tabs for group: ${currentGroupName}`);
 
-  // Notify the sidebar to update the dropdown if it's the current group
+  // Notify the sidebar to update the dropdown for the specific group
   browser.runtime.sendMessage({ action: "tabsUpdated", groupName: currentGroupName, tabs: tabData });
 }
 

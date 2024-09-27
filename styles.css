@@ -5,12 +5,10 @@ body {
   color: #ffffff;
   height: 100vh;
   overflow: hidden;
-}
-
-/* Gradient background similar to macOS Safari sidebar */
-.gradient-bg {
-  background: linear-gradient(180deg, #3b3f5c, #232639);
-  color: #fff;
+  display: flex;
+  flex-direction: column;
+  width: 300px; /* Set a fixed width or use relative units as needed */
+  box-sizing: border-box; /* Include padding and border in width */
 }
 
 /* Sidebar Header */
@@ -20,6 +18,9 @@ body {
   letter-spacing: 1px;
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Group Styles */
@@ -32,25 +33,30 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-radius: 8px; /* Added rounded corners */
+  border-radius: 8px; /* Rounded corners */
+  max-width: 100%; /* Ensure group doesn't exceed sidebar width */
+  box-sizing: border-box; /* Include padding in width calculations */
 }
 
 .group:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 8px; /* Apply rounded corners on hover as well */
+  border-radius: 8px;
 }
 
 .group.active {
   background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 8px; /* Apply rounded corners when active */
+  border-radius: 8px;
 }
 
 .group-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%; /* Ensure content spans full group width */
+  box-sizing: border-box; /* Include padding in width calculations */
 }
 
+/* Group Name Styling */
 .group-name {
   font-size: 16px;
   font-weight: 500;
@@ -61,11 +67,17 @@ body {
   margin-right: 10px;
 }
 
+/* Arrow Icon */
 .arrow-icon {
   cursor: pointer;
   font-size: 16px;
   color: #ffffff;
   transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.arrow-icon.open {
+  transform: rotate(90deg); /* Rotate to indicate open state */
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .arrow-icon:hover {
@@ -76,8 +88,13 @@ body {
 .tabs-list {
   padding-left: 1rem;
   margin-top: 0.5rem;
+  max-height: 60vh; /* Prevent excessive height */
+  overflow-y: auto; /* Enable vertical scrolling if needed */
+  width: 100%; /* Ensure tabs list spans full group width */
+  box-sizing: border-box; /* Include padding in width calculations */
 }
 
+/* Tab Item */
 .tab-item {
   display: flex; 
   align-items: center; 
@@ -86,10 +103,18 @@ body {
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   transition: color 0.2s ease;
+  white-space: nowrap; /* Prevent text wrapping */
+  box-sizing: border-box; /* Include padding in width calculations */
+  max-width: 100%; /* Prevent tab-item from exceeding container width */
 }
 
-.tab-item:hover {
-  color: rgba(255, 255, 255, 0.9);
+/* Prevent text overflow */
+.tab-title {
+  flex-grow: 1;
+  flex-shrink: 1; /* Allow the title to shrink */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Favicon image styling */
@@ -98,19 +123,22 @@ body {
   height: 16px;
   margin-right: 10px;
   opacity: 0.8; /* Increased opacity for better visibility */
-  border-radius: 3px; /* Optional: adds slight rounding to icons */
-  object-fit: cover; /* Ensures the icon fits within the bounds */
+  border-radius: 3px; /* Slight rounding for aesthetics */
+  flex-shrink: 0;
+  object-fit: cover; /* Ensure the icon fits within the bounds */
 }
 
 /* Button Styles */
 .btn-new-container {
-  background-color: rgba(72, 133, 237, 1);  /* Blue accent similar to macOS */
+  background-color: rgba(72, 133, 237, 1);  /* Blue accent */
   border: none;
   color: #ffffff;
   padding: 12px;
   font-size: 16px;
   border-radius: 8px;
   transition: background-color 0.3s ease;
+  width: 100%; /* Ensure button spans full sidebar width */
+  box-sizing: border-box; /* Include padding in width calculations */
 }
 
 .btn-new-container:hover {
@@ -122,6 +150,8 @@ body {
   height: 1px;
   background-color: rgba(255, 255, 255, 0.1);
   margin: 15px 0;
+  width: 100%; /* Ensure separator spans full sidebar width */
+  box-sizing: border-box; /* Include padding in width calculations */
 }
 
 /* Lower section links for bookmarks, reading list, etc. */
@@ -129,6 +159,8 @@ body {
   margin-top: auto;
   display: flex;
   flex-direction: column;
+  width: 100%; /* Ensure lower section spans full sidebar width */
+  box-sizing: border-box; /* Include padding in width calculations */
 }
 
 .lower-section a {
@@ -137,8 +169,27 @@ body {
   text-decoration: none;
   margin-bottom: 10px;
   transition: color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lower-section a:hover {
   color: rgba(255, 255, 255, 0.9);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  body {
+    width: 250px; /* Reduce sidebar width on smaller screens */
+  }
+
+  .group-name, .tab-title {
+    font-size: 14px; /* Decrease font size for better fit */
+  }
+
+  .btn-new-container {
+    font-size: 14px;
+    padding: 10px;
+  }
 }
