@@ -1,5 +1,3 @@
-// sidebar.js
-
 let currentGroupName = null;
 
 // Helper function to extract domain from a URL
@@ -122,6 +120,7 @@ document.getElementById('addGroupButton').addEventListener('click', async () => 
   }
 });
 
+// Updated addGroupElement Function with Bootstrap Two-Squares Icon
 function addGroupElement(groupName) {
   const groupsDiv = document.getElementById('groups');
 
@@ -133,6 +132,13 @@ function addGroupElement(groupName) {
 
   const groupContent = document.createElement('div');
   groupContent.className = 'group-content';
+
+  // Two-Squares Icon Added using Bootstrap Icons
+  const groupIcon = document.createElement('i');
+  groupIcon.className = 'bi bi-grid group-icon'; // Using 'bi-grid' for two squares
+  groupIcon.setAttribute('aria-hidden', 'true');
+  groupIcon.setAttribute('title', groupName);
+  groupContent.appendChild(groupIcon);
 
   const groupNameSpan = document.createElement('span');
   groupNameSpan.className = 'group-name';

@@ -60,12 +60,21 @@ body {
   border-radius: 0.5rem;
 }
 
+.group-icon {
+  margin-right: 0.5rem; /* Space between icon and group name */
+  font-size: 1rem; /* 16px to match text size */
+  color: rgba(255, 255, 255, 0.7); /* Consistent icon color */
+}
+
+.group-icon:hover {
+  color: rgba(255, 255, 255, 0.9); /* Slightly lighter on hover */
+}
+
+/* Ensure group-content has appropriate alignment */
 .group-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 /* Group Name Styling */
@@ -85,6 +94,7 @@ body {
   font-size: 1rem; /* 16px */
   color: #ffffff;
   transition: transform 0.3s ease, color 0.3s ease;
+  margin-left: 0.5rem;
 }
 
 .arrow-icon.open {
@@ -97,7 +107,7 @@ body {
 
 /* Tabs List */
 .tabs-list {
-  padding-left: 1rem;
+  padding-left: 1.5rem;
   margin-top: 0.5rem;
   max-height: 60vh;
   overflow-y: auto;
