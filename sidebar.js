@@ -162,7 +162,8 @@ function attachArrowClickListener(groupElement) {
   const groupName = groupElement.dataset.name;
 
   arrowIcon.addEventListener('click', async (event) => {
-    event.stopPropagation();
+    event.stopPropagation(); // Prevent the click from bubbling up to the group
+
     let tabsList = groupElement.querySelector('.tabs-list');
 
     if (tabsList) {
@@ -173,7 +174,7 @@ function attachArrowClickListener(groupElement) {
       return;
     }
 
-    // Fetch tabs for the group
+    // Fetch tabs for the group if tabsList doesn't exist
     const tabs = await getTabsForGroup(groupName);
     if (tabs.length === 0) return;
 
