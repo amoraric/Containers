@@ -7,17 +7,21 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  width: 300px; /* Set a fixed width or use relative units as needed */
-  box-sizing: border-box; /* Include padding and border in width */
+  width: 100%; /* Flexible width */
+  max-width: 400px; /* Optional maximum width */
+  min-width: 250px; /* Optional minimum width */
+  padding: 1rem; /* Use relative units for padding */
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 /* Sidebar Header */
 .sidebar-header {
   font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 1px;
+  font-size: 1rem; /* 16px */
+  letter-spacing: 0.1rem;
   color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem; /* 20px */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -27,56 +31,57 @@ body {
 .group {
   background-color: transparent;
   border: none;
-  padding: 12px 15px;
-  margin-bottom: 5px;
+  padding: 0.75rem 0.94rem; /* 12px 15px */
+  margin-bottom: 0.3125rem; /* 5px */
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-radius: 8px; /* Rounded corners */
-  max-width: 100%; /* Ensure group doesn't exceed sidebar width */
-  box-sizing: border-box; /* Include padding in width calculations */
+  border-radius: 0.5rem; /* 8px */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .group:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }
 
 .group.active {
   background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }
 
 .group-content {
   display: flex;
+  flex-wrap: wrap; /* Allow wrapping */
   align-items: center;
   justify-content: space-between;
-  width: 100%; /* Ensure content spans full group width */
-  box-sizing: border-box; /* Include padding in width calculations */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Group Name Styling */
 .group-name {
-  font-size: 16px;
+  font-size: 1rem; /* 16px */
   font-weight: 500;
   flex-grow: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-right: 10px;
+  margin-right: 0.625rem; /* 10px */
 }
 
 /* Arrow Icon */
 .arrow-icon {
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1rem; /* 16px */
   color: #ffffff;
   transition: transform 0.3s ease, color 0.3s ease;
 }
 
 .arrow-icon.open {
-  transform: rotate(90deg); /* Rotate to indicate open state */
+  transform: rotate(90deg);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -88,30 +93,35 @@ body {
 .tabs-list {
   padding-left: 1rem;
   margin-top: 0.5rem;
-  max-height: 60vh; /* Prevent excessive height */
-  overflow-y: auto; /* Enable vertical scrolling if needed */
-  width: 100%; /* Ensure tabs list spans full group width */
-  box-sizing: border-box; /* Include padding in width calculations */
+  max-height: 60vh;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 /* Tab Item */
 .tab-item {
   display: flex; 
   align-items: center; 
-  padding: 8px 0;
-  font-size: 15px;
+  padding: 0.5rem 0; /* 8px 0 */
+  font-size: 0.9375rem; /* 15px */
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   transition: color 0.2s ease;
-  white-space: nowrap; /* Prevent text wrapping */
-  box-sizing: border-box; /* Include padding in width calculations */
-  max-width: 100%; /* Prevent tab-item from exceeding container width */
+  white-space: nowrap;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.tab-item:hover {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Prevent text overflow */
 .tab-title {
   flex-grow: 1;
-  flex-shrink: 1; /* Allow the title to shrink */
+  flex-shrink: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -119,39 +129,40 @@ body {
 
 /* Favicon image styling */
 .tab-favicon {
-  width: 16px;
-  height: 16px;
-  margin-right: 10px;
-  opacity: 0.8; /* Increased opacity for better visibility */
-  border-radius: 3px; /* Slight rounding for aesthetics */
+  width: 1rem; /* 16px */
+  height: 1rem;
+  margin-right: 0.625rem; /* 10px */
+  opacity: 0.8;
+  border-radius: 0.1875rem; /* 3px */
   flex-shrink: 0;
-  object-fit: cover; /* Ensure the icon fits within the bounds */
+  object-fit: cover;
 }
 
 /* Button Styles */
 .btn-new-container {
-  background-color: rgba(72, 133, 237, 1);  /* Blue accent */
+  background-color: rgba(72, 133, 237, 1);
   border: none;
   color: #ffffff;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
+  padding: 0.75rem; /* 12px */
+  font-size: 1rem; /* 16px */
+  border-radius: 0.5rem; /* 8px */
   transition: background-color 0.3s ease;
-  width: 100%; /* Ensure button spans full sidebar width */
-  box-sizing: border-box; /* Include padding in width calculations */
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 1rem; /* Add spacing below the button */
 }
 
 .btn-new-container:hover {
-  background-color: rgba(52, 103, 207, 1); /* Darker blue on hover */
+  background-color: rgba(52, 103, 207, 1);
 }
 
 /* Group Divider for Separation */
 .separator {
   height: 1px;
   background-color: rgba(255, 255, 255, 0.1);
-  margin: 15px 0;
-  width: 100%; /* Ensure separator spans full sidebar width */
-  box-sizing: border-box; /* Include padding in width calculations */
+  margin: 0.9375rem 0; /* 15px */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Lower section links for bookmarks, reading list, etc. */
@@ -159,15 +170,15 @@ body {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  width: 100%; /* Ensure lower section spans full sidebar width */
-  box-sizing: border-box; /* Include padding in width calculations */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .lower-section a {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
   text-decoration: none;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem; /* 10px */
   transition: color 0.3s ease;
   white-space: nowrap;
   overflow: hidden;
@@ -181,15 +192,26 @@ body {
 /* Responsive Design */
 @media (max-width: 600px) {
   body {
-    width: 250px; /* Reduce sidebar width on smaller screens */
+    max-width: 100%; /* Allow full width on small screens */
+    min-width: 200px; /* Prevent too narrow */
+    padding: 0.5rem; /* Reduce padding */
+  }
+
+  .sidebar-header {
+    font-size: 0.875rem; /* 14px */
+    margin-bottom: 1rem; /* 16px */
   }
 
   .group-name, .tab-title {
-    font-size: 14px; /* Decrease font size for better fit */
+    font-size: 0.875rem; /* 14px */
   }
 
   .btn-new-container {
-    font-size: 14px;
-    padding: 10px;
+    font-size: 0.875rem;
+    padding: 0.625rem; /* 10px */
+  }
+
+  .tab-item {
+    padding: 0.5rem 0; /* Maintain padding */
   }
 }
