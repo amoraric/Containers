@@ -191,30 +191,6 @@ body {
   letter-spacing: 0.05rem;
 }
 
-/* Lower section links for bookmarks, reading list, etc. */
-.lower-section {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.lower-section a {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem; /* 14px */
-  text-decoration: none;
-  margin-bottom: 0.625rem; /* 10px */
-  transition: color 0.3s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lower-section a:hover {
-  color: rgba(255, 255, 255, 0.9);
-}
-
 /* Responsive Design */
 @media (max-width: 600px) {
   body {
