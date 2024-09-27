@@ -1,87 +1,133 @@
+/* Global Styles */
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 10px;
-  background-color: #1e1e1e;
+  font-family: 'SF Pro Text', 'Poppins', sans-serif;
+  background-color: #1c1c1e;
   color: #ffffff;
+  height: 100vh;
+  overflow: hidden;
 }
 
+/* Gradient background similar to macOS Safari sidebar */
+.gradient-bg {
+  background: linear-gradient(180deg, #3b3f5c, #232639);
+  color: #fff;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+}
+
+/* Group Styles */
 .group {
-  position: relative;
+  background-color: transparent;
+  border: none;
+  padding: 12px 15px;
   margin-bottom: 5px;
-  background-color: #2e2e2e;
-  border-radius: 5px;
-  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 8px; /* Added rounded corners */
 }
 
 .group:hover {
-  background-color: #3e3e3e;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px; /* Apply rounded corners on hover as well */
 }
 
 .group.active {
-  background-color: #4e4e4e;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 8px; /* Apply rounded corners when active */
 }
 
 .group-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px;
 }
 
 .group-name {
   font-size: 16px;
+  font-weight: 500;
   flex-grow: 1;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   margin-right: 10px;
 }
 
-.icons-container {
-  display: flex;
-  align-items: center;
-}
-
+/* Arrow Icon */
 .arrow-icon {
   cursor: pointer;
   font-size: 16px;
-  margin-left: 10px;
-  display: inline-block;
-  color: #fff;
+  color: #ffffff;
+  transition: color 0.3s ease;
 }
 
 .arrow-icon:hover {
-  color: #ccc;
+  color: rgba(255, 255, 255, 0.7);
 }
 
+/* Tabs List */
 .tabs-list {
-  display: none;
-  padding-left: 20px;
+  padding-left: 1rem;
+  margin-top: 0.5rem;
 }
 
 .tab-item {
-  padding: 5px 0;
-  font-size: 14px;
-  color: #ccc;
+  padding: 8px 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .tab-item:hover {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-#addGroupButton {
-  padding: 10px 15px;
-  font-size: 16px;
-  margin-top: 10px;
-  background-color: #3e3e3e;
-  color: #fff;
+/* Button Styles */
+.btn-new-container {
+  background-color: rgba(72, 133, 237, 1);  /* Blue accent similar to macOS */
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  color: #ffffff;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
 }
 
-#addGroupButton:hover {
-  background-color: #4e4e4e;
+.btn-new-container:hover {
+  background-color: rgba(52, 103, 207, 1); /* Darker blue on hover */
+}
+
+/* Group Divider for Separation */
+.separator {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 15px 0;
+}
+
+/* Lower section links for bookmarks, reading list, etc. */
+.lower-section {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.lower-section a {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  text-decoration: none;
+  margin-bottom: 10px;
+  transition: color 0.3s ease;
+}
+
+.lower-section a:hover {
+  color: rgba(255, 255, 255, 0.9);
 }
